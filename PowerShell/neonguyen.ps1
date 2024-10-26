@@ -1,8 +1,9 @@
 
 #Alias 
 Set-Alias vim nvim
-Set-Alias p pnpm
 Set-Alias g git
+Set-Alias lg lazygit
+Set-Alias p pnpm
 
 
 #Oh my posh

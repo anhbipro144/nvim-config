@@ -1,5 +1,7 @@
 {
     "diagnostics.globals": [
-        "vim"
+        "vim",
+        "actions",
+        "telescope_sorter"
     ]
 }
