@@ -37,8 +37,8 @@ vim.keymap.set('v', '<C-s>', '<Esc>:w<CR>gv', { noremap = true, silent = true })
 
 
 -- Navigate buffer
-vim.keymap.set("n", "<S-h>", ":bprevious<CR>")
-vim.keymap.set("n", "<S-l>", ":bnext<CR>")
+-- vim.keymap.set("n", "<S-h>", ":bprevious<CR>")
+-- vim.keymap.set("n", "<S-l>", ":bnext<CR>")
 
 -- Buffer management
 vim.keymap.set('n', "<leader>be", "<cmd>Telescope buffers sort_mru=true sort_lastused=true initial_mode=normal<CR>") -- Buffer explorer
@@ -53,10 +53,9 @@ vim.api.nvim_set_keymap('i', '<C-z>', '<C-o>u', { noremap = true, silent = true 
 
 
 
-
 -- vim.keymap.set('n', '<C-w><C-s>', ':bd<Delete currentCR>', { noremap = true, silent = true }) -- Delete current buffer
-vim.keymap.set('n', '<S-W><S-H>', ':split<CR>', { noremap = true, silent = true })  -- Horizontal split
-vim.keymap.set('n', '<S-W><S-V>', ':vsplit<CR>', { noremap = true, silent = true }) -- Vertical split
+vim.keymap.set('n', '<S-W><S-H>', ':vsplit<CR>', { noremap = true, silent = true }) -- Horizontal split
+vim.keymap.set('n', '<S-W><S-V>', ':split<CR>', { noremap = true, silent = true })  -- Vertical split
 vim.keymap.set('n', '<S-W><S-D>', ':close<CR>', { noremap = true, silent = true })  -- Close split
 
 

@@ -5,7 +5,15 @@ return {
   config = function()
     local bufferline = require("bufferline")
     bufferline.setup({})
-    vim.keymap.set('n', '<S-u>', ':BufferLineMovePrev<CR>', { noremap = true, silent = true })
-    vim.keymap.set('n', '<S-i>', ':BufferLineMoveNext<CR>', { noremap = true, silent = true })
+
+
+    -- Move buffer
+    vim.keymap.set('n', '<S-j>', ':BufferLineMovePrev<CR>', { noremap = true, silent = true })
+    vim.keymap.set('n', '<S-k>', ':BufferLineMoveNext<CR>', { noremap = true, silent = true })
+
+
+    -- Navigate buffers
+    vim.keymap.set('n', '<S-h>', ':BufferLineCyclePrev<CR>', { noremap = true, silent = true })
+    vim.keymap.set('n', '<S-l>', ':BufferLineCycleNext<CR>', { noremap = true, silent = true })
   end
 }
