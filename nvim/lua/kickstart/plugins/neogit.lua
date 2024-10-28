@@ -14,10 +14,11 @@ return {
   config = function()
     local neogit = require("neogit")
     local diffview = require("diffview")
+    local telescope_config = require("telescope")
 
     neogit.setup({
       telescope_sorter = function()
-        return require("telescope").extensions.fzf.native_fzf_sorter()
+        return telescope_config.extensions.fzf.native_fzf_sorter()
       end,
 
       graph_style = "unicode",
