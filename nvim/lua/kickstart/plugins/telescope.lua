@@ -65,20 +65,14 @@ return {
 
       telescope.setup({
         defaults = {
-          -- path_display = {
-          --   filename_first = {
-          --     reverse_directories = false
-          --   }
-          -- },
-          path_display = filename_first_path_display,
-          file_ignore_patterns = { "^node_modules/", "^dist/", "^.git/" },
-          mappings = {
-            i = {
-              ["<C-j>"] = actions.move_selection_next,
-              ["<C-k>"] = actions.move_selection_previous,
-              ["<esc>"] = actions.close
-            },
+          path_display = {
+            filename_first = {
+              reverse_directories = false
+            }
           },
+          -- path_display = filename_first_path_display,
+          file_ignore_patterns = { "^node_modules/", "^dist/", "^.git/" },
+          mappings = default_mapping
         },
 
         pickers = {
@@ -88,14 +82,14 @@ return {
           find_files = {
             theme = theme.dropdown,
             hidden = true,
-            find_command = {
-              "rg",
-              "--files",
-              "--glob",
-              "!{.git/*,.svelte-kit/*,target/*,node_modules/*}",
-              "--path-separator",
-              "/",
-            },
+            -- find_command = {
+            --   "rg",
+            --   "--files",
+            --   "--glob",
+            --   "!{.git/*,.svelte-kit/*,target/*,node_modules/*}",
+            --   "--path-separator",
+            --   "/",
+            -- },
           },
 
           live_grep = {
@@ -136,17 +130,15 @@ return {
 
       -- See `:help telescope.builtin`
       vim.keymap.set('n', '<leader>ss', builtin.git_status, { desc = '[S]earch Git [S]tatus' })
-      vim.keymap.set('n', '<leader>sf', builtin.git_files, { desc = '[S]earch Git file' })
-
-      vim.keymap.set('n', '<leader>sa', builtin.find_files, { desc = '[S]earch [A]ll Files' })
       vim.keymap.set('n', '<leader>sg', builtin.live_grep, { desc = '[S]earch by [G]rep' })
       vim.keymap.set('n', '<leader>sd', builtin.diagnostics, { desc = '[S]earch [D]iagnostics' })
+
+      vim.keymap.set('n', '<leader>sa', builtin.git_files, { desc = '[S]earch Git file' })
+      vim.keymap.set('n', '<leader>sf', builtin.find_files, { desc = '[S]earch [A]ll Files' })
 
       vim.keymap.set('n', '<leader>sh', builtin.help_tags, { desc = '[S]earch [H]elp' })
       vim.keymap.set('n', '<leader>sk', builtin.keymaps, { desc = '[S]earch [K]eymaps' })
       vim.keymap.set('n', '<leader>sw', builtin.grep_string, { desc = '[S]earch current [W]ord' })
-
-
 
       vim.keymap.set('n', '<leader>rf', builtin.lsp_references, { desc = '[S]earch [R]eferences' })
 
