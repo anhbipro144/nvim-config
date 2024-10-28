@@ -8,7 +8,7 @@ return {
     "nvim-telescope/telescope.nvim",
   },
   keys = {
-    { '<leader>gg', '<cmd>Neogit<CR>', mode = 'n', desc = 'Open Neogit' }
+    { '<leader>gs', '<cmd>Neogit<CR>', mode = 'n', desc = 'Open Neogit' }
   },
   cmd = "Neogit",
   config = function()
@@ -22,6 +22,16 @@ return {
       end,
 
       graph_style = "unicode",
+
+      mappings = {
+        finder = {
+          ["<cr>"] = "Select",
+          ["<c-j>"] = "Next",
+          ["<c-k>"] = "Previous",
+        },
+      }
+
+
     })
 
 
