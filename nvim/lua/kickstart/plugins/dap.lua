@@ -15,23 +15,6 @@ return {
     },
     opts = {
       handlers = {
-        -- codelldb = function(config)
-        --   config.adapters = {
-        --     name = 'LLDB: Launch',
-        --     type = 'codelldb',
-        --     request = 'launch',
-        --     program = function()
-        --       local dir = vim.fn.expand("%:p:h")
-        --       return vim.fn.input('Path to executable: ', dir .. '/', 'file')
-        --       -- return vim.fn.input('Path to executable: ', vim.fn.getcwd() .. '/', 'file')
-        --     end,
-        --     cwd = '${workspaceFolder}',
-        --     stopOnEntry = false,
-        --     args = {},
-        --     console = 'integratedTerminal',
-        --   }
-        --   require('mason-nvim-dap').default_setup(config) -- don't forget this!
-        -- end,
         codelldb = function(config)
           config.configurations = {
             {
@@ -39,10 +22,8 @@ return {
               type = 'codelldb',
               request = 'launch',
               program = function()
-                -- Get the directory of the current file and prompt for the executable within it
                 local output_dir = vim.fn.expand("%:p:h")
                 local output_file = output_dir .. "/" .. vim.fn.expand("%:t:r")
-
                 return vim.fn.input('Path to executable: ', output_file, 'file')
               end,
               cwd = '${workspaceFolder}',
@@ -50,66 +31,88 @@ return {
               args = {},
               console = 'integratedTerminal',
             }, }
-          require('mason-nvim-dap').default_setup(config) -- don't forget this!
+          require('mason-nvim-dap').default_setup(config)
         end,
       }
     }
   },
 
-  -- codelldb = {
-  --   {
-  --     name = 'LLDB: Launch',
-  --     type = 'codelldb',
-  --     request = 'launch',
-  --     program = function()
-  --       return vim.fn.input('Path to executable: ', vim.fn.getcwd() .. '/', 'file')
-  --     end,
-  --     cwd = '${workspaceFolder}',
-  --     stopOnEntry = false,
-  --     args = {},
-  --     console = 'integratedTerminal',
-  --   },
-  -- }
-  --
 
   {
     "mfussenegger/nvim-dap",
     config = function()
       local dap = require("dap")
+      local dapui = require("dapui")
+      local dapvt = require("nvim-dap-virtual-text")
 
-      vim.keymap.set('n', '<leader>dc', dap.continue, { silent = true })
-      vim.keymap.set('n', '<leader>ds', dap.step_over, { silent = true })
-      vim.keymap.set('n', '<leader>di', dap.step_into, { silent = true })
-      vim.keymap.set('n', '<leader>do', dap.step_out, { silent = true })
-      vim.keymap.set('n', '<leader>db', dap.toggle_breakpoint, { silent = true })
+      local opts = { noremap = true, silent = true }
+
+      vim.keymap.set('n', '<leader>dc', dap.continue, opts)
+      vim.keymap.set('n', '<leader>dd', dap.step_over, opts)
+      vim.keymap.set('n', '<leader>di', dap.step_into, opts)
+      vim.keymap.set('n', '<leader>dt', dap.terminate, opts)
+      vim.keymap.set('n', '<leader>do', dap.step_out, opts)
+      vim.keymap.set('n', '<leader>db', dap.toggle_breakpoint, opts)
+
+      vim.keymap.set("n", "<leader>de", dapui.eval, opts)
+      vim.keymap.set("n", "<leader>du", dapui.open, opts)
+      vim.keymap.set("n", "<leader>dx", dapui.close, opts)
+
+
+      vim.keymap.set("n", "<leader>dw", function()
+        dapui.float_element('watches', { enter = true })
+      end, opts)
+
+      vim.keymap.set("n", "<leader>ds", function()
+        dapui.float_element('scopes', { enter = true })
+      end, opts)
+
+      vim.keymap.set("n", "<leader>dr", function()
+        dapui.float_element('repl', { enter = true })
+      end, opts)
+
 
       vim.api.nvim_set_hl(0, "DapStoppedLine", { default = true, link = "Visual" })
 
 
       dap.set_log_level("DEBUG")
 
-      -- dap.configurations.cpp = {
-      --   {
-      --     name = "Launch",
-      --     type = "lldb",
-      --     request = "launch",
-      --     program = function()
-      --       return vim
-      --           .fn.input('Path to executable: ', vim.fn.getcwd() .. '/', 'file')
-      --     end,
-      --     cwd = '${workspaceFolder}',
-      --     stopOnEntry = false,
-      --     args = {},
-      --     runInTerminal = true,
-      --   } }
+      dapvt.setup({
+        virt_text_pos = 'inline'
+      })
+
+      dapui.setup({
+        element_mappings = {
+          scopes = {
+            expand = { "<Tab>" },
+            -- Set the expand key to Tab for the scopes element
+          }
+        },
+        layouts = {
+          {
+            elements = {
+              { id = "scopes", size = 0.25 },
+              "breakpoints",
+              "watches",
+            },
+            size = 40, -- 40 columns
+            position = "left",
+          },
+        },
+        windows = { indent = 1 },
+
+        render = {
+          max_type_length = nil, -- Can be integer or nil.
+        },
+      })
 
       for _, language in ipairs(js_based_languages) do
         dap.configurations[language] = {
-          -- Debug  nodejs lauch
+          -- Debug  nodejs lauch (untested)
           {
+            name = "Debug Backend lauch",
             type = "pwa-node",
             request = "launch",
-            name = "Launch file",
             program = "${file}",
             cwd = vim.fn.getcwd(),
             sourceMaps = true,
@@ -118,34 +121,36 @@ return {
           },
           -- Debug nodejs process attach (add --inspect when run the process)
           {
+            name = "Debug Backend attach",
             type = "pwa-node",
             request = "attach",
-            name = "Attach",
             cwd = vim.fn.getcwd(),
             sourceMaps = true,
             runtimeExecutable = "node",
             address = "0.0.0.0",
             port = 9229,
             protocol = 'inspector',
-            restart = true, -- Automatically reattach if the process restarts console = 'integratedTerminal',
+            restart = true,
             reAttach = true,
           },
           -- Debug client lauch Chrome
           {
-            name = 'Debug Next.js with Chrome',
+            name = 'Debug lauch with Chrome',
             type = 'pwa-chrome',
             request = 'launch',
             url = 'http://localhost:3001',
             webRoot = '${workspaceFolder}',
+            -- Change to your prefer OS.
             runtimeExecutable = '/usr/bin/google-chrome',
             runtimeArgs = {
               '--remote-debugging-port=9222',
+              -- Only need these 2 below on Wayland.
               '--enable-features=UseOzonePlatform',
               '--ozone-platform=wayland' },
             skipFiles = { '<node_internals>/**' }
           },
 
-          -- Debug client attach (add --inspect when the process)
+          -- Debug client attach (add --inspect when the process) (untested)
           {
             name = 'Debug attach to Chrome ',
             type = 'pwa-chrome',
@@ -178,10 +183,8 @@ return {
       },
     },
     dependencies = {
-      -- Install the vscode-js-debug adapter
       {
         "microsoft/vscode-js-debug",
-        -- After install, build it and rename the dist directory to out
         build = "npm install --legacy-peer-deps --no-save && npx gulp vsDebugServerBundle && rm -rf out && mv dist out",
         version = "1.*",
       },
@@ -190,13 +193,9 @@ return {
         config = function()
           ---@diagnostic disable-next-line: missing-fields
           require("dap-vscode-js").setup({
-            -- Path of node executable. Defaults to $NODE_PATH, and then "node"
-            -- node_path = "node",
 
             debugger_path = vim.fn.resolve(vim.fn.stdpath("data") .. "/lazy/vscode-js-debug"),
 
-            -- Command to use to launch the debug server. Takes precedence over "node_path" and "debugger_path"
-            -- debugger_cmd = { "js-debug-adapter" },
 
             adapters = {
               "chrome",
@@ -208,14 +207,6 @@ return {
               "node-terminal",
             },
 
-            -- Path for file logging
-            -- log_file_path = "(stdpath cache)/dap_vscode_js.log",
-
-            -- Logging level for output to file. Set to false to disable logging.
-            -- log_file_level = false,
-
-            -- Logging level for output to console. Set to false to disable console output.
-            -- log_console_level = vim.log.levels.ERROR,
           })
         end,
       },
@@ -223,48 +214,49 @@ return {
         "Joakker/lua-json5",
         build = "./install.sh",
       },
-
-      {
-        "rcarriga/nvim-dap-ui",
-        event = "VeryLazy",
-        dependencies = "mfussenegger/nvim-dap",
-        config = function()
-          local dap = require("dap")
-          local dapui = require("dapui")
-          require("dapui").setup({
-            layouts =
-            { {
-              elements = {
-                { id = "breakpoints", size = 0.15 },
-                -- { id = "stacks",      size = 0.25 },
-                { id = "watches",     size = 0.25 },
-                { id = "scopes",      size = 0.5 },
-                { id = "repl",        size = 0 },
-              },
-              position = "left",
-              size = 40
-            },
-              -- {
-              --   elements = {
-              --     { id = "repl", size = 1 },
-              --     -- { id = "console", size = 0.5 }
-              --   },
-              --   position = "top",
-              --   size = 1
-              -- }
-            },
-          })
-          dap.listeners.after.event_initialized["dapui_config"] = function()
-            dapui.open()
-          end
-          dap.listeners.before.event_terminated["dapui_config"] = function()
-            dapui.close()
-          end
-          dap.listeners.before.event_exited["dapui_config"] = function()
-            dapui.close()
-          end
-        end
-      },
+      "theHamsta/nvim-dap-virtual-text",
+      "rcarriga/nvim-dap-ui",
+      -- {
+      --   "rcarriga/nvim-dap-ui",
+      --   event = "VeryLazy",
+      --   dependencies = "mfussenegger/nvim-dap",
+      --   config = function()
+      --     local dap = require("dap")
+      --     local dapui = require("dapui")
+      --     require("dapui").setup({
+      --       layouts =
+      --       { {
+      --         elements = {
+      --           { id = "breakpoints", size = 0.15 },
+      --           -- { id = "stacks",      size = 0.25 },
+      --           { id = "watches",     size = 0.25 },
+      --           { id = "scopes",      size = 0.5 },
+      --           { id = "repl",        size = 0 },
+      --         },
+      --         position = "left",
+      --         size = 40
+      --       },
+      --         -- {
+      --         --   elements = {
+      --         --     { id = "repl", size = 1 },
+      --         --     -- { id = "console", size = 0.5 }
+      --         --   },
+      --         --   position = "top",
+      --         --   size = 1
+      --         -- }
+      --       },
+      --     })
+      --     dap.listeners.after.event_initialized["dapui_config"] = function()
+      --       dapui.open()
+      --     end
+      --     dap.listeners.before.event_terminated["dapui_config"] = function()
+      --       dapui.close()
+      --     end
+      --     dap.listeners.before.event_exited["dapui_config"] = function()
+      --       dapui.close()
+      --     end
+      --   end
+      -- },
 
     },
   },
