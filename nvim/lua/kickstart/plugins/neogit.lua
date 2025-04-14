@@ -3,8 +3,6 @@ return {
   dependencies = {
     "nvim-lua/plenary.nvim",
     "sindrets/diffview.nvim",
-
-    --
     "nvim-telescope/telescope.nvim",
   },
   keys = {
@@ -13,7 +11,6 @@ return {
   cmd = "Neogit",
   config = function()
     local neogit = require("neogit")
-    local diffview = require("diffview")
     local telescope_config = require("telescope")
 
     neogit.setup({
@@ -24,6 +21,7 @@ return {
       graph_style = "unicode",
       integrations = {
         diffview = true,
+        telescope = true
       },
 
       mappings = {
@@ -32,28 +30,7 @@ return {
           ["<c-j>"] = "Next",
           ["<c-k>"] = "Previous",
         },
-        -- status = {
-        --   ["d"] = "DiffviewOpen",
-        -- },
       }
-
-
-    })
-
-    local actions = require("diffview.actions")
-    diffview.setup({
-      file_panel = {
-        win_config = { -- See |diffview-config-win_config|
-          position = "right",
-          width = 35,
-          win_opts = {},
-        },
-      },
-      merge_tool = {
-        default = {
-          layout = "diff3_mixed"
-        }
-      },
     })
   end,
 }

@@ -14,38 +14,85 @@ require('lazy').setup({
 
   require 'kickstart/plugins/neo-tree',
 
+  require 'kickstart/plugins/file-operation',
+
+  require 'kickstart/plugins/compiler',
+
+  require 'kickstart/plugins/diffview',
+
   require 'kickstart/plugins/colorscheme',
 
   require 'kickstart/plugins/cmp',
 
-  require 'kickstart/plugins/bufferline',
+  require 'kickstart/plugins/dap',
 
-  require 'kickstart/plugins/cool',
+  require 'kickstart/plugins/barbar',
+
+  require 'kickstart/plugins/markdown',
+
+  require 'kickstart/plugins/obsidian',
+
+  require 'kickstart/plugins/persistence',
+
+  require 'kickstart/plugins/hbac',
+
+  require 'kickstart/plugins/incline',
+
+  require 'kickstart/plugins/ts-error-translator',
+
+  require 'kickstart/plugins/toggleterm',
+
+  require 'kickstart/plugins/git-worktree',
+
+  require 'kickstart/plugins/todo-comments',
+
+  require 'kickstart/plugins/outline',
+
+  require 'kickstart/plugins/neo-test',
+
+  require 'kickstart/plugins/flash',
 
   require 'kickstart/plugins/lsp',
 
+  require 'kickstart/plugins/lsp-preview',
+
+  require 'kickstart/plugins/autotag',
+
+  require 'kickstart/plugins/cursor-animate',
+
+  -- require 'kickstart/plugins/blink',
+
+  require 'kickstart/plugins/snipe',
+
+  require 'kickstart/plugins/windows',
+
+  require 'kickstart/plugins/ts-tool',
+
+  require 'kickstart/plugins/noice',
+
+  require 'kickstart/plugins/comment',
+
+  require 'kickstart/plugins/illuminate',
+
+  require 'kickstart/plugins/kulala',
+
+  require 'kickstart/plugins/find-replace',
+
+  -- require 'kickstart/plugins/linting',
+
   require 'kickstart/plugins/mini',
+
+  require 'kickstart/plugins/cool',
 
   require 'kickstart/plugins/treesitter',
 
   require 'kickstart/plugins/autopairs',
 
-  require 'kickstart/plugins/lazygit',
-
   require 'kickstart/plugins/indent_line',
 
   require 'kickstart/plugins/formatting',
 
-  require 'kickstart/plugins/linting',
-
-  require 'kickstart/plugins/bufdelete',
-
   require 'kickstart/plugins/neogit',
-
-  -- require 'kickstart/plugins/todo-comments',
-
-  -- require 'kickstart.plugins.debug',
-
 
 }, {
   ui = {

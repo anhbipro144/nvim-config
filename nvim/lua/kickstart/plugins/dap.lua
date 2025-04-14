@@ -50,9 +50,10 @@ return {
       vim.keymap.set('n', '<leader>dc', dap.continue, opts)
       vim.keymap.set('n', '<leader>dd', dap.step_over, opts)
       vim.keymap.set('n', '<leader>di', dap.step_into, opts)
-      vim.keymap.set('n', '<leader>dt', dap.terminate, opts)
       vim.keymap.set('n', '<leader>do', dap.step_out, opts)
+      vim.keymap.set('n', '<leader>dt', dap.terminate, opts)
       vim.keymap.set('n', '<leader>db', dap.toggle_breakpoint, opts)
+      vim.keymap.set("n", "<leader>dr", dap.restart, opts)
 
       vim.keymap.set("n", "<leader>de", dapui.eval, opts)
       vim.keymap.set("n", "<leader>du", dapui.open, opts)
@@ -67,7 +68,7 @@ return {
         dapui.float_element('scopes', { enter = true })
       end, opts)
 
-      vim.keymap.set("n", "<leader>dr", function()
+      vim.keymap.set("n", "<leader>dk", function()
         dapui.float_element('repl', { enter = true })
       end, opts)
 
@@ -92,7 +93,6 @@ return {
           {
             elements = {
               { id = "scopes", size = 0.25 },
-              "breakpoints",
               "watches",
             },
             size = 40, -- 40 columns
@@ -108,17 +108,6 @@ return {
 
       for _, language in ipairs(js_based_languages) do
         dap.configurations[language] = {
-          -- Debug  nodejs lauch (untested)
-          {
-            name = "Debug Backend lauch",
-            type = "pwa-node",
-            request = "launch",
-            program = "${file}",
-            cwd = vim.fn.getcwd(),
-            sourceMaps = true,
-            protocol = 'inspector',
-            console = 'integratedTerminal',
-          },
           -- Debug nodejs process attach (add --inspect when run the process)
           {
             name = "Debug Backend attach",
@@ -132,6 +121,17 @@ return {
             protocol = 'inspector',
             restart = true,
             reAttach = true,
+          },
+          -- Debug  nodejs lauch (untested)
+          {
+            name = "Debug Backend lauch",
+            type = "pwa-node",
+            request = "launch",
+            program = "${file}",
+            cwd = vim.fn.getcwd(),
+            sourceMaps = true,
+            protocol = 'inspector',
+            console = 'integratedTerminal',
           },
           -- Debug client lauch Chrome
           {
@@ -216,48 +216,6 @@ return {
       },
       "theHamsta/nvim-dap-virtual-text",
       "rcarriga/nvim-dap-ui",
-      -- {
-      --   "rcarriga/nvim-dap-ui",
-      --   event = "VeryLazy",
-      --   dependencies = "mfussenegger/nvim-dap",
-      --   config = function()
-      --     local dap = require("dap")
-      --     local dapui = require("dapui")
-      --     require("dapui").setup({
-      --       layouts =
-      --       { {
-      --         elements = {
-      --           { id = "breakpoints", size = 0.15 },
-      --           -- { id = "stacks",      size = 0.25 },
-      --           { id = "watches",     size = 0.25 },
-      --           { id = "scopes",      size = 0.5 },
-      --           { id = "repl",        size = 0 },
-      --         },
-      --         position = "left",
-      --         size = 40
-      --       },
-      --         -- {
-      --         --   elements = {
-      --         --     { id = "repl", size = 1 },
-      --         --     -- { id = "console", size = 0.5 }
-      --         --   },
-      --         --   position = "top",
-      --         --   size = 1
-      --         -- }
-      --       },
-      --     })
-      --     dap.listeners.after.event_initialized["dapui_config"] = function()
-      --       dapui.open()
-      --     end
-      --     dap.listeners.before.event_terminated["dapui_config"] = function()
-      --       dapui.close()
-      --     end
-      --     dap.listeners.before.event_exited["dapui_config"] = function()
-      --       dapui.close()
-      --     end
-      --   end
-      -- },
-
     },
   },
 }

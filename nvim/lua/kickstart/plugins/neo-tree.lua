@@ -11,16 +11,36 @@ return {
   },
   cmd = 'Neotree',
   keys = {
-    { '\\', ':Neotree float reveal<CR>', desc = 'NeoTree reveal', silent = true },
+    { '0', ':Neotree float reveal<CR>', desc = 'NeoTree reveal', silent = true },
   },
   opts = {
+    popup_border_style = "rounded",
     close_if_last_window = true,
+    window = {
+      mappings = {
+        ["<tab>"] = {
+          "toggle_node",
+          nowait = false, -- disable `nowait` if you have existing combos starting with this char that you want to use
+        },
+      }
+    },
     filesystem = {
+      filtered_items = {
+        visible = true,
+        hide_dotfiles = false,                  -- This will show hidden files
+        hide_gitignored = false,
+        hijack_netrw_behavior = "open_default", -- netrw disabled, opening a directory opens neo-tree
+      },
       window = {
         mappings = {
-          ['\\'] = 'close_window',
+          ['0'] = 'close_window',
         },
       },
     },
+    actions = {
+      open_file = {
+        quit_on_open = true
+      }
+    }
   },
 }
