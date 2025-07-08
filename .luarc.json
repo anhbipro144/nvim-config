@@ -1,0 +1,11 @@
+{
+    "diagnostics.globals": [
+        "vim",
+        "actions",
+        "telescope_sorter",
+        "config"
+    ],
+    "diagnostics.disable": [
+        "undefined-doc-name"
+    ]
+}
