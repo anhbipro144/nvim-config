@@ -3,13 +3,6 @@ return {
   dependencies = {
     "nvim-lua/plenary.nvim",
     "nvim-treesitter/nvim-treesitter",
-    {
-      "Davidyz/VectorCode",
-      version = "*",
-      build = "pipx upgrade vectorcode",
-      dependencies = { "nvim-lua/plenary.nvim" },
-    },
-
     -- {
     --   -- use a local directory for development
     --   dir = "/home/neo/personal/learn/codecompanion-history.nvim",

@@ -30,7 +30,7 @@ require('lazy').setup({
 
   require 'kickstart.plugins.auto-save',
 
-  -- require 'kickstart.plugins.notify',
+  require 'kickstart.plugins.notify',
 
   require 'kickstart.plugins.img-clip',
 
@@ -84,7 +84,7 @@ require('lazy').setup({
 
   require 'kickstart.plugins.ts-tool',
 
-  -- require 'kickstart.plugins.noice',
+  require 'kickstart.plugins.noice',
 
   require 'kickstart.plugins.comment',
 
