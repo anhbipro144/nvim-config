@@ -24,10 +24,14 @@ return {
         -- filetypes = { "nix" },
       },
       clangd = {
-        cmd       = {
-          "clangd"
+        cmd          = {
+          "clangd",
+          "--background-index",
         },
-        filetypes = { "c", "cpp" }
+        init_options = {
+          fallbackFlags = { '-std=c++23' }
+        };
+        filetypes    = { "c", "cpp" }
       },
     }
 
@@ -79,6 +83,10 @@ return {
     capabilities = vim.tbl_deep_extend('force', capabilities, file_operation_capabilities, cmp_capabilites)
 
 
+    local clangd = servers.clangd or {}
+    clangd.capabilities = vim.tbl_deep_extend('force', {}, capabilities, clangd.capabilities or {})
+    lspconfig.clangd.setup(clangd)
+
     require("mason").setup()
     require("mason-lspconfig").setup({
       handlers = {
@@ -99,7 +107,6 @@ return {
         "prettier",
 
         --lsp
-        "clangd",
         "json-lsp",
         "lua-language-server",
 
