@@ -9,6 +9,7 @@ return {
                 "rafamadriz/friendly-snippets"
             }
         },
+        'hrsh7th/cmp-nvim-lsp', -- ← ensure this is here
         "onsails/lspkind.nvim",
         'saadparwaiz1/cmp_luasnip',
         'hrsh7th/cmp-buffer',
@@ -86,12 +87,14 @@ return {
                 -- For more advanced Luasnip keymaps (e.g. selecting choice nodes, expansion) see:
                 --    https://github.com/L3MON4D3/LuaSnip?tab=readme-ov-file#keymaps
             },
+
             sources = cmp.config.sources({
-                { name = 'nvim_lsp' },
-                { name = "codecompanion" },
-                { name = 'luasnip' },
-                { name = 'path' },
-                { name = 'render-markdown' },
+            { name = 'nvim_lsp' },
+            { name = 'luasnip' },
+            { name = "codecompanion" },
+            { name = 'path' },
+            { name = 'render-markdown' },
+
             }, {
                 { name = "buffer" }
             }),

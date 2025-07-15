@@ -13,16 +13,20 @@ return {
     'nvimtools/none-ls.nvim',
   },
   config = function()
-    local servers = {
+    local lspconfig = require("lspconfig")
+    local file_operation_capabilities = require("lsp-file-operations").default_capabilities()
+    local telescope_builtin = require("telescope.builtin")
+    -- local cmp_capabilites = require('blink.cmp').get_lsp_capabilities()
 
-      lua_ls = {},
-      jsonls = {
-        filetypes = { "json" }
-      },
-      ["nil"] = {
-        -- cmd = { "/home/neo/.nix-profile/bin/nil" },
-        -- filetypes = { "nix" },
-      },
+    local base_caps = vim.lsp.protocol.make_client_capabilities()
+    local capabilities = require('cmp_nvim_lsp').default_capabilities(base_caps)
+    capabilities = vim.tbl_deep_extend('force',
+      capabilities,
+      require("lsp-file-operations").default_capabilities()
+    )
+
+
+    local manual_servers = {
       clangd = {
         cmd          = {
           "clangd",
@@ -30,18 +34,78 @@ return {
         },
         init_options = {
           fallbackFlags = { '-std=c++23' }
-        };
+        },
         filetypes    = { "c", "cpp" }
+      },
+
+
+      neocmake = {
+        cmd = { "neocmakelsp", "--stdio" },
+        filetypes = { "cmake" },
+        root_dir = function(fname)
+          return lspconfig.util.find_git_ancestor(fname)
+        end,
+        single_file_support = true,
+        init_options = {
+          format = {
+            enable = true
+          },
+          lint = {
+            enable = true
+          },
+          scan_cmake_in_package = true
+        }
       },
     }
 
-    local lspconfig = require("lspconfig")
-    local capabilities = vim.lsp.protocol.make_client_capabilities()
-    local file_operation_capabilities = require("lsp-file-operations").default_capabilities()
-    local telescope_builtin = require("telescope.builtin")
-    -- local cmp_capabilites = require('blink.cmp').get_lsp_capabilities()
-    local cmp_capabilites = require('cmp_nvim_lsp').default_capabilities()
+    local servers = {
 
+      lua_ls = {},
+      jsonls = {
+        filetypes = { "json" }
+      },
+      ["nil"] = {},
+    }
+
+    for name, manual_cfg in pairs(manual_servers) do
+      local cfg = vim.tbl_deep_extend('force',
+        { capabilities = capabilities },
+        manual_cfg
+      )
+
+      lspconfig[name].setup(cfg)
+    end
+
+
+
+    require("mason").setup()
+    require("mason-lspconfig").setup({
+      handlers = {
+        function(server_name)
+          local server = servers[server_name] or {}
+          server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
+          lspconfig[server_name].setup(server)
+        end,
+      }
+    })
+    require("mason-tool-installer").setup({
+      ensure_installed = {
+        --linter
+        "eslint",
+
+        --formatter
+        "clang-format",
+        "prettier",
+
+        --lsp
+        "json-lsp",
+        "lua-language-server",
+
+        --debugger
+        "codelldb",
+
+      },
+    })
 
 
     vim.api.nvim_create_autocmd('LspAttach', {
@@ -78,42 +142,6 @@ return {
         -- Rename the variable under your cursor.
         map('<leader>rn', vim.lsp.buf.rename, '[R]e[n]ame')
       end,
-    })
-
-    capabilities = vim.tbl_deep_extend('force', capabilities, file_operation_capabilities, cmp_capabilites)
-
-
-    local clangd = servers.clangd or {}
-    clangd.capabilities = vim.tbl_deep_extend('force', {}, capabilities, clangd.capabilities or {})
-    lspconfig.clangd.setup(clangd)
-
-    require("mason").setup()
-    require("mason-lspconfig").setup({
-      handlers = {
-        function(server_name)
-          local server = servers[server_name] or {}
-          server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
-          lspconfig[server_name].setup(server)
-        end,
-      }
-    })
-    require("mason-tool-installer").setup({
-      ensure_installed = {
-        --linter
-        "eslint",
-
-        --formatter
-        "clang-format",
-        "prettier",
-
-        --lsp
-        "json-lsp",
-        "lua-language-server",
-
-        --debugger
-        "codelldb",
-
-      },
     })
   end
 
