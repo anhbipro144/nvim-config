@@ -14,7 +14,6 @@ return {
   },
   config = function()
     local lspconfig = require("lspconfig")
-    local file_operation_capabilities = require("lsp-file-operations").default_capabilities()
     local telescope_builtin = require("telescope.builtin")
     -- local cmp_capabilites = require('blink.cmp').get_lsp_capabilities()
 
