@@ -122,7 +122,7 @@ return {
           return require("codecompanion.adapters").extend("copilot", {
             schema = {
               model = {
-                default = "o4-mini",
+                default = "gpt-5",
               },
             },
           })
@@ -137,7 +137,7 @@ return {
             schema = {
               model = {
                 default = function()
-                  return "o4-mini"
+                  return "gpt-5"
                 end,
               },
             },
