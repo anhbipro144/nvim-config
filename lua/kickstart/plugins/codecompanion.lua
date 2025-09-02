@@ -26,7 +26,7 @@ return {
       },
       strategies = {
         chat = {
-          adapter = "openai",
+          adapter = "copilot",
           keymaps = {
             close = {
               modes = {
@@ -36,6 +36,20 @@ return {
           },
 
           tools = {
+            groups = {
+              ["vec_tools"] = {
+                description = "Vectorcode tools group - Can query,  list files in vector database, ls indexed projects",
+                tools = {
+                  "vectorcode_files_ls",
+                  "vectorcode_query",
+                  "vectorcode_ls",
+                },
+                opts = {
+                  collapse_tools = true,
+                },
+              }
+            },
+
             opts = {
               default_tools = {
                 "web_search",
@@ -55,13 +69,13 @@ return {
             auto_save = true,
             expiration_days = 3,
             picker = "telescope",
-            auto_generate_title = true,
-            title_generation_opts = {
-              adapter = nil,               -- "copilot"
-              model = nil,                 -- "gpt-4o"
-              refresh_every_n_prompts = 3, -- e.g., 3 to refresh after every 3rd user prompt
-              max_refreshes = 3,
-            },
+            auto_generate_title = false,
+            -- title_generation_opts = {
+            --   adapter = nil,               -- "copilot"
+            --   model = nil,                 -- "gpt-4o"
+            --   refresh_every_n_prompts = 3, -- e.g., 3 to refresh after every 3rd user prompt
+            --   max_refreshes = 3,
+            -- },
             dir_to_save = vim.fn.stdpath("data") .. "/codecompanion-history",
             enable_logging = false,
             chat_filter = nil, -- function(chat_data) return boolean end
@@ -79,12 +93,13 @@ return {
         },
         vectorcode = {
           opts = {
-            add_tool = true,
             tool_opts = {
-              no_duplicate = true,
-              chunk_mode = true,
-            },
-          },
+              query = {
+                chunk_mode = true,
+                use_lsp = true,
+              },
+            }
+          }
         }
       },
       adapters = {
@@ -129,10 +144,10 @@ return {
           })
         end,
 
-        web_search = function()
-          return require("codecompanion.adapters").extend("web_search", {
+        tavily = function()
+          return require("codecompanion.adapters").extend("tavily", {
             env = {
-              api_key = os.getenv("TAVILY_API_KEY"),
+              api_key = os.getenv("TAVILY")
             },
           })
         end,
@@ -146,7 +161,7 @@ return {
     end, { desc = "Open CodeCompanion history picker" })
 
     vim.keymap.set("n", "<leader>cp", function()
-      codecompanion.chat()
+      codecompanion.toggle()
     end, { desc = "Open CodeCompanion history picker" })
 
     -- vim.keymap.set("n", "<leader>cp", ":CodeCompanionChat<CR>", { desc = "Open CodeCompanion chat" })

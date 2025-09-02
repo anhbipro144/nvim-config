@@ -4,11 +4,14 @@ return {
   -- build = "pipx upgrade vectorcode",
   dependencies = { "nvim-lua/plenary.nvim" },
   config = function()
-    require("vectorcode").setup({
-      -- When using via CodeCompanion or LSP extension, enable chunked requests
-      chunk_mode = true,
-      -- Optionally adjust chunk size (default is often fine)
-      chunk_size = 512, -- number of tokens per request
-    })
+    require("vectorcode").setup(
+      {
+        --     chunk_mode = true,
+        --     chunk_size = 2500,     -- number of tokens per request
+        async_backend = "lsp", -- or "lsp"
+      }
+
+
+    )
   end
 }
