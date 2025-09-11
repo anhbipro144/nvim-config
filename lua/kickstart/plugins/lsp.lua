@@ -58,7 +58,16 @@ return {
     }
 
     local servers = {
-
+      ["docker-compose-language-service"] = {
+        filetypes = { "yaml.docker-compose" },
+        root_dir = lspconfig.util.root_pattern(
+          "docker-compose.yml",
+          "docker-compose.yaml",
+          "compose.yml",
+          "compose.yaml",
+          ".git"
+        ),
+      },
       lua_ls = {},
       jsonls = {
         filetypes = { "json" }
