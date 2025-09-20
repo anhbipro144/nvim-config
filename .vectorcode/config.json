@@ -1,7 +1,0 @@
-{
-  "chroma": { "mode": "local" },
-  "hnsw:M":             256,
-  "hnsw:construction_ef": 4096,
-  "hnsw:search_ef":       4096,
-  "hnsw:space": "cosine"
-}
