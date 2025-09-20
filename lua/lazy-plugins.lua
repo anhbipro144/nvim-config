@@ -20,6 +20,8 @@ require('lazy').setup({
 
   require 'kickstart.plugins.colorscheme',
 
+  require 'kickstart.plugins.kitty-scrollback',
+
   require 'kickstart.plugins.cmp',
 
   require 'kickstart.plugins.dap',
