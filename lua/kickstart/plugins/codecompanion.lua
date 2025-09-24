@@ -103,54 +103,56 @@ return {
         }
       },
       adapters = {
-        xai = function()
-          return require("codecompanion.adapters").extend("xai", {
-            env = {
-              api_key = os.getenv("GROK_API_KEY")
-            },
-            schema = {
-              model = {
-                default = function()
-                  return "grok-3-mini"
-                end,
+        http = {
+          xai = function()
+            return require("codecompanion.adapters").extend("xai", {
+              env = {
+                api_key = os.getenv("GROK_API_KEY")
               },
-            },
-          })
-        end,
-
-        copilot = function()
-          return require("codecompanion.adapters").extend("copilot", {
-            schema = {
-              model = {
-                default = "gpt-5",
+              schema = {
+                model = {
+                  default = function()
+                    return "grok-3-mini"
+                  end,
+                },
               },
-            },
-          })
-        end,
+            })
+          end,
 
-        openai = function()
-          return require("codecompanion.adapters").extend("openai", {
-            env = {
-              api_key = os.getenv("OPENAI_API_KEY")
-            },
-
-            schema = {
-              model = {
-                default = function()
-                  return "gpt-5"
-                end,
+          copilot = function()
+            return require("codecompanion.adapters").extend("copilot", {
+              schema = {
+                model = {
+                  default = "gpt-5",
+                },
               },
-            },
-          })
-        end,
+            })
+          end,
 
-        tavily = function()
-          return require("codecompanion.adapters").extend("tavily", {
-            env = {
-              api_key = os.getenv("TAVILY")
-            },
-          })
-        end,
+          openai = function()
+            return require("codecompanion.adapters").extend("openai", {
+              env = {
+                api_key = os.getenv("OPENAI_API_KEY")
+              },
+
+              schema = {
+                model = {
+                  default = function()
+                    return "gpt-5"
+                  end,
+                },
+              },
+            })
+          end,
+
+          tavily = function()
+            return require("codecompanion.adapters").extend("tavily", {
+              env = {
+                api_key = os.getenv("TAVILY")
+              },
+            })
+          end,
+        }
       },
 
     })
