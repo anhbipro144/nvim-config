@@ -94,6 +94,8 @@ require('lazy').setup({
 
   require 'kickstart.plugins.kulala',
 
+  require 'kickstart.plugins.ts-node-action',
+
   require 'kickstart.plugins.vectorcode',
 
   -- require 'kickstart/plugins/linting',
