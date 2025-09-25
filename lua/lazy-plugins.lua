@@ -34,6 +34,8 @@ require('lazy').setup({
 
   require 'kickstart.plugins.notify',
 
+  require 'kickstart.plugins.move-line',
+
   require 'kickstart.plugins.img-clip',
 
   require 'kickstart.plugins.markdown',

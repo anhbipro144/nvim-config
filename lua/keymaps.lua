@@ -32,10 +32,8 @@ vim.keymap.set('i', '<C-BS>', '<C-W>', { noremap = true, silent = true })
 -- Create new blank line with Ctrl + enter
 vim.keymap.set('n', '<C-CR>', 'o<Esc>', { noremap = true, silent = true })
 
--- Visual mode editing
-vim.keymap.set("v", "N", ":m '>+1<CR>gv=gv") -- Move selection up
-vim.keymap.set("v", "M", ":m '<-2<CR>gv=gv") -- Move selection down
-vim.keymap.set('v', "<C-n>", "y'>pgv")       -- Duplicate selection
+---- Duplicate selection
+vim.keymap.set('v', "<C-n>", "y'>pgv")
 
 
 -- Vertical navigate
@@ -51,8 +49,11 @@ vim.keymap.set('n', '<C-s>', ':w<CR>', { noremap = true, silent = true })
 vim.keymap.set('i', '<C-s>', '<Esc>:w<CR>a', { noremap = true, silent = true })
 vim.keymap.set('v', '<C-s>', '<Esc>:w<CR>gv', { noremap = true, silent = true })
 
-vim.keymap.set('x', "<leader>p", "\"_dP")                                 -- Paste without losing buffer
-vim.keymap.set('i', '<C-z>', '<C-o>u', { noremap = true, silent = true }) -- Remap Ctrl + z to undo in insert mode
+-- Paste without losing buffer
+vim.keymap.set('x', "<leader>p", "\"_dP")
+
+ -- Remap Ctrl + z to undo in insert mode
+vim.keymap.set('i', '<C-z>', '<C-o>u', { noremap = true, silent = true })
 
 -- Split
 vim.keymap.set('n', '<S-W><S-H>', ':vsplit<CR>', { noremap = true, silent = true }) -- Horizontal split
@@ -64,9 +65,11 @@ vim.keymap.set('n', '<S-W><S-D>', ':close<CR>', { noremap = true, silent = true 
 vim.keymap.set("n", "<leader>ql", function() require("persistence"):load({ last = true }) end) -- Load the last session
 vim.keymap.set("n", "<leader>qs", function() require("persistence"):load() end)                -- Load the session for the current directory
 
+ -- Open Mason
+vim.keymap.set("n", "<leader>ms", ':Mason<CR>', { noremap = true, silent = true })
 
-vim.keymap.set("n", "<leader>ms", ':Mason<CR>', { noremap = true, silent = true }) -- Open Mason
-vim.keymap.set("n", "<leader>lz", ':Lazy<CR>', { noremap = true, silent = true })  -- Open Lazy
+  -- Open Lazy
+vim.keymap.set("n", "<leader>lz", ':Lazy<CR>', { noremap = true, silent = true })
 
 -- Highlight when yanking
 vim.api.nvim_create_autocmd('TextYankPost', {
