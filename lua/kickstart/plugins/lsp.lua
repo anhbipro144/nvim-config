@@ -73,6 +73,7 @@ return {
         filetypes = { "json" }
       },
       ["nil"] = {},
+      pyright = {},
     }
 
     for name, manual_cfg in pairs(manual_servers) do
