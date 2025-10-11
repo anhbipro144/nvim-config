@@ -20,19 +20,6 @@ vim.g.mapleader = ' '
 -- LSP keybinds
 nmap('<leader>n', vim.diagnostic.goto_next, true)
 nmap('<leader>N', vim.diagnostic.goto_prev, true)
-nmap('<leader>k', vim.lsp.buf.hover)
-nmap('<leader>r', vim.lsp.buf.rename)
-nmap('<leader>c', vim.lsp.buf.code_action)
-
-nmap('gd', vim.lsp.buf.definition)
-nmap('gi', vim.lsp.buf.implementation)
-nmap('gr', vim.lsp.buf.references)
-
--- Telescope keybinds
-nmap('<leader>f', ':Telescope find_files<cr>')
-nmap('<leader>g', ':Telescope live_grep<cr>')
-nmap('<leader>b', ':Telescope buffers<cr>')
-nmap('<leader>h', ':Telescope help_tags<cr>')
 
 -- Move around split windows with less keystrokes
 nmap('<c-h>', ':wincmd h<cr>', true)
@@ -66,25 +53,6 @@ nmap('Y', 'y$') -- Yank to the end
 nmap('U', ':redo<cr>') -- Redo
 vmap('J', 'j')
 vmap('K', 'k')
-
--- Filthy emacs(ish) bindings
-nmap('<c-n>', '<c-d>zz')
-nmap('<c-p>', '<c-u>zz')
-
--- Move line up and down
-nmap('<a-j>', ':move +1<cr>', true)
-nmap('<a-k>', ':move -2<cr>', true)
-imap('<a-j>', '<esc>:move +1<cr>a', true)
-imap('<a-k>', '<esc>:move -2<cr>a', true)
-
--- Move selection up and down
-vmap('<a-j>', ':move \'>+1<cr>gv', true)
-vmap('<a-k>', ':move \'<-2<cr>gv', true)
-
--- Replace text
-nmap('s', ':s//g<left><left>') -- Line
-nmap('S', ':%s//g<left><left>') -- All
-vmap('s', ':s//g<left><left>') -- Selection
 
 -- Prevent Ctrl-C from canceling block insertion
 imap('<c-c>', '<esc>')
