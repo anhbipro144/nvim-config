@@ -33,8 +33,8 @@ return {
           ["<C-n>"] = actions.move_selection_next,
           ["<C-p>"] = actions.move_selection_previous,
           ["<esc>"] = actions.close,
-          ["<C-d>"] = false,
-          ["<C-u>"] = false,
+          ['<C-d>'] = actions.preview_scrolling_down,
+          ['<C-u>'] = actions.preview_scrolling_up,
         },
       }
 

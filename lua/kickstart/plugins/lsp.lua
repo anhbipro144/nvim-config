@@ -128,6 +128,11 @@ return {
         -- Jump to the definition of the word under your cursor.
         map('gd', telescope_builtin.lsp_definitions, '[G]oto [D]efinition')
 
+        map('gv', function()
+          vim.cmd('vsplit')
+          vim.lsp.buf.definition()
+        end, '[G]oto definition [V]ertical split')
+
         map('gr', telescope_builtin.lsp_references, '[G]oto [R]eferences')
 
         -- Jump to the implementation of the word under your cursor.
