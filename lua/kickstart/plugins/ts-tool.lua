@@ -25,6 +25,10 @@ return {
       settings = {
         expose_as_code_action = "all",
         separate_diagnostic_server = false,
+
+        tsserver_plugins = {
+          "typescript-styled-plugin",
+        },
       }
     }
     )
