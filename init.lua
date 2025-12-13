@@ -1,5 +1,8 @@
 -- vim.o.shell = 'C:\\Program Files\\WindowsApps\\Microsoft.PowerShell_7.4.5.0_x64__8wekyb3d8bbwe\\pwsh.exe'
+vim.g.loaded_ruby_provider = 0
+vim.g.loaded_perl_provider = 0
 
+require("vim.loader")
 -- [[ Setting options ]]
 require 'options'
 

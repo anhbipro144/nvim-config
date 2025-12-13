@@ -43,6 +43,7 @@ return {
           yml             = { "prettier", stop_after_first = true },
           json            = { "prettier", stop_after_first = true },
           nix             = { "nixfmt", stop_after_first = true },
+          python          = { "black", stop_after_first = true },
         },
 
       })

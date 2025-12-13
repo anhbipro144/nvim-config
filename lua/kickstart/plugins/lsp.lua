@@ -3,6 +3,7 @@ return {
   dependencies = {
     {
       'williamboman/mason.nvim',
+      cmd = { "Mason" },
       config = true,
     },
     "williamboman/mason-lspconfig.nvim",
@@ -13,16 +14,12 @@ return {
     'nvimtools/none-ls.nvim',
   },
   config = function()
-    local lspconfig = require("lspconfig")
+    local lsp_util = require("lspconfig.util")
     local telescope_builtin = require("telescope.builtin")
     -- local cmp_capabilites = require('blink.cmp').get_lsp_capabilities()
 
     local base_caps = vim.lsp.protocol.make_client_capabilities()
     local capabilities = require('cmp_nvim_lsp').default_capabilities(base_caps)
-    capabilities = vim.tbl_deep_extend('force',
-      capabilities,
-      require("lsp-file-operations").default_capabilities()
-    )
 
 
     local manual_servers = {
@@ -42,7 +39,7 @@ return {
         cmd = { "neocmakelsp", "--stdio" },
         filetypes = { "cmake" },
         root_dir = function(fname)
-          return lspconfig.util.find_git_ancestor(fname)
+          return lsp_util.find_git_ancestor(fname)
         end,
         single_file_support = true,
         init_options = {
@@ -60,7 +57,7 @@ return {
     local servers = {
       ["docker-compose-language-service"] = {
         filetypes = { "yaml.docker-compose" },
-        root_dir = lspconfig.util.root_pattern(
+        root_dir = lsp_util.root_pattern(
           "docker-compose.yml",
           "docker-compose.yaml",
           "compose.yml",
@@ -77,15 +74,14 @@ return {
     }
 
     for name, manual_cfg in pairs(manual_servers) do
+      pcall(require, "lspconfig.server_configurations." .. name)
       local cfg = vim.tbl_deep_extend('force',
         { capabilities = capabilities },
         manual_cfg
       )
-
-      lspconfig[name].setup(cfg)
+      vim.lsp.config(name, cfg)
+      vim.lsp.enable(name)
     end
-
-
 
     require("mason").setup()
     require("mason-lspconfig").setup({
@@ -93,14 +89,14 @@ return {
         function(server_name)
           local server = servers[server_name] or {}
           server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
-          lspconfig[server_name].setup(server)
+          vim.lsp.config[server_name].setup(server)
         end,
       }
     })
     require("mason-tool-installer").setup({
       ensure_installed = {
         --linter
-        "eslint",
+        "eslint-lsp",
 
         --formatter
         "clang-format",

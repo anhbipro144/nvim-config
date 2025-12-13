@@ -6,7 +6,8 @@ return {
     "rcarriga/nvim-notify",
   },
   config = function()
-    require("notify").setup({
+    local notify = require("notify")
+    notify.setup({
       top_down = false,
       render = "wrapped-compact",
       max_width = function()
@@ -15,6 +16,9 @@ return {
       end,
       timeout = 200,
     })
+
+    vim.notify = require("notify")
+
     require("noice").setup({
       lsp = {
         -- override markdown rendering so that **cmp** and other plugins use **Treesitter**
@@ -24,6 +28,7 @@ return {
           ["cmp.entry.get_documentation"] = true, -- requires hrsh7th/nvim-cmp
         },
       },
+
       -- you can enable a preset for easier configuration
       presets = {
         command_palette = true,       -- position the cmdline and popupmenu together

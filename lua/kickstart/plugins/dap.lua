@@ -40,6 +40,7 @@ return {
 
   {
     "mfussenegger/nvim-dap",
+    cmd = { "DapToggle" },
     config = function()
       local dap = require("dap")
       local dapui = require("dapui")

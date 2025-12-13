@@ -1,5 +1,11 @@
 return {
   "olimorris/codecompanion.nvim",
+  -- version = "v17.25.0",
+  cmd = { "CodeCompanion" },
+  keys = {
+    { "`",          "<cmd>CodeCompanion<CR>",         desc = "Open CodeCompanion chat buffer" },
+    { "<leader>ch", "<cmd>CodeCompanion history<CR>", desc = "Open CodeCompanion history picker" },
+  },
   dependencies = {
     "nvim-lua/plenary.nvim",
     "nvim-treesitter/nvim-treesitter",
@@ -21,39 +27,36 @@ return {
     codecompanion.setup({
       display = {
         chat = {
-          auto_scroll = false
+          auto_scroll = false,
+          window = {
+            layout = "float", -- float|vertical|horizontal|buffer
+            height = 0.9,
+            width = 0.9,
+          },
         },
       },
       strategies = {
         chat = {
           adapter = "copilot",
           keymaps = {
-            close = {
-              modes = {
-                n = "q",
-              },
-            },
+            -- close = {
+            --   modes = {
+            --     n = "q",
+            --   },
+            -- },
           },
 
           tools = {
-            groups = {
-              ["vec_tools"] = {
-                description = "Vectorcode tools group - Can query,  list files in vector database, ls indexed projects",
-                tools = {
-                  "vectorcode_files_ls",
-                  "vectorcode_query",
-                  "vectorcode_ls",
-                },
-                opts = {
-                  collapse_tools = true,
-                },
-              }
-            },
-
             opts = {
               default_tools = {
-                "web_search",
+                "read_file",
+                "grep_search",
+                "file_search",
+                "search_web",
+                "fetch_webpage",
+                "vectorcode_vectorise"
               },
+
               auto_submit_errors = false,
               auto_submit_success = false,
             },
@@ -70,12 +73,12 @@ return {
             expiration_days = 3,
             picker = "telescope",
             auto_generate_title = false,
-            -- title_generation_opts = {
-            --   adapter = nil,               -- "copilot"
-            --   model = nil,                 -- "gpt-4o"
-            --   refresh_every_n_prompts = 3, -- e.g., 3 to refresh after every 3rd user prompt
-            --   max_refreshes = 3,
-            -- },
+            title_generation_opts = {
+              adapter = nil, -- "copilot"
+              model = nil,   -- "gpt-4o"
+              refresh_every_n_prompts = 3,
+              max_refreshes = 3,
+            },
             dir_to_save = vim.fn.stdpath("data") .. "/codecompanion-history",
             enable_logging = false,
             chat_filter = nil, -- function(chat_data) return boolean end
@@ -86,19 +89,41 @@ return {
               },
               delete = {
                 n = "d",
-                i = "<C-d>",
+                i = "<C-D>",
               },
             },
           }
         },
         vectorcode = {
           opts = {
+            tool_group = {
+              enabled = true,
+              -- a list of extra tools that you want to include in `@vectorcode_toolbox`.
+              -- if you use @vectorcode_vectorise, it'll be very handy to include
+              -- `file_search` here.
+              extras = {},
+              collapse = false, -- whether the individual tools should be shown in the chat
+            },
             tool_opts = {
+              ["*"] = {},
+              ls = {},
+              vectorise = {},
               query = {
-                chunk_mode = true,
+                max_num = { chunk = -1, document = -1 },
+                default_num = { chunk = 50, document = 10 },
+                include_stderr = false,
                 use_lsp = true,
+                no_duplicate = true,
+                chunk_mode = true,
+                summarise = {
+                  enabled = false,
+                  adapter = nil,
+                  query_augmented = true,
+                },
               },
-            }
+              files_ls = {},
+              files_rm = {},
+            },
           }
         }
       },
@@ -123,7 +148,7 @@ return {
             return require("codecompanion.adapters").extend("copilot", {
               schema = {
                 model = {
-                  default = "gpt-5",
+                  default = "gpt-5-mini",
                 },
               },
             })
@@ -162,10 +187,8 @@ return {
       codecompanion.extensions.history.browse_chats(nil)
     end, { desc = "Open CodeCompanion history picker" })
 
-    vim.keymap.set("n", "<leader>cp", function()
+    vim.keymap.set("n", "`", function()
       codecompanion.toggle()
-    end, { desc = "Open CodeCompanion history picker" })
-
-    -- vim.keymap.set("n", "<leader>cp", ":CodeCompanionChat<CR>", { desc = "Open CodeCompanion chat" })
+    end, { desc = "Open CodeCompanion chat buffer" })
   end
 }

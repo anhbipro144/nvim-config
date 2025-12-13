@@ -4,13 +4,27 @@ return {
     dependencies = {
         {
             'L3MON4D3/LuaSnip',
-            build        = "make install_jsregexp",
+            build = "make install_jsregexp",
             dependencies = {
-                "rafamadriz/friendly-snippets"
-            }
+                {
+                    "rafamadriz/friendly-snippets",
+                    lazy = true, -- Don't load immediately
+                }
+            },
+            -- Lazy load snippet expansion
+            config = function()
+                local luasnip = require 'luasnip'
+                -- Lazy load snippets only when needed
+                require('luasnip.loaders.from_vscode').lazy_load()
+                luasnip.filetype_extend("typescript", { "tsdoc" })
+                luasnip.filetype_extend("javascript", { "jsdoc" })
+            end,
         },
-        'hrsh7th/cmp-nvim-lsp', -- ← ensure this is here
-        "onsails/lspkind.nvim",
+        'hrsh7th/cmp-nvim-lsp',
+        {
+            "onsails/lspkind.nvim",
+            lazy = true, -- Load on demand
+        },
         'saadparwaiz1/cmp_luasnip',
         'hrsh7th/cmp-buffer',
         'hrsh7th/cmp-path',
@@ -19,17 +33,6 @@ return {
     config = function()
         local cmp = require 'cmp'
         local luasnip = require 'luasnip'
-
-
-
-        require('luasnip.loaders.from_vscode').load() -- Load friendly-snippets
-
-        -- luasnip.config.setup {}
-        -- luasnip.filetype_extend("typescript", { "javascript" })
-        luasnip.filetype_extend("typescript", { "tsdoc" })
-        luasnip.filetype_extend("javascript", { "jsdoc" })
-
-        -- luasnip.filetype_extend("typescriptreact", { "html" })
 
         cmp.setup {
             snippet = {

@@ -1,5 +1,8 @@
 return {
   "sindrets/diffview.nvim",
+  keys = {
+    { "<leader>df", "<cmd>DiffviewFileHistory %<cr>", desc = "Diffview: file history" },
+  },
   config = function()
     local diffview = require("diffview")
     local actions = require("diffview.actions")
@@ -24,7 +27,6 @@ return {
         },
         file_panel = {
           ["q"] = actions.close,
-
         }
 
       },

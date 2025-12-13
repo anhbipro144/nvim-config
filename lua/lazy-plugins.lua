@@ -12,13 +12,15 @@ require('lazy').setup({
 
   require 'kickstart.plugins.telescope',
 
-  require 'kickstart.plugins.neo-tree',
+  require 'kickstart.plugins.fff',
 
-  require 'kickstart.plugins.file-operation',
+  require 'kickstart.plugins.neo-tree',
 
   require 'kickstart.plugins.diffview',
 
   require 'kickstart.plugins.colorscheme',
+
+  require 'kickstart.plugins.code-snap',
 
   require 'kickstart.plugins.kitty-scrollback',
 
@@ -26,13 +28,15 @@ require('lazy').setup({
 
   require 'kickstart.plugins.dap',
 
-  require 'kickstart.plugins.barbar',
+  require 'kickstart.plugins.treej',
+
+  require 'kickstart.plugins.scratch',
+
+  require 'kickstart.plugins.term-edit',
 
   require 'kickstart.plugins.image',
 
   require 'kickstart.plugins.auto-save',
-
-  require 'kickstart.plugins.notify',
 
   require 'kickstart.plugins.move-line',
 
@@ -41,6 +45,8 @@ require('lazy').setup({
   require 'kickstart.plugins.markdown',
 
   require 'kickstart.plugins.obsidian',
+
+  require 'kickstart.plugins.grapple',
 
   require 'kickstart.plugins.persistence',
 
@@ -52,6 +58,8 @@ require('lazy').setup({
 
   require 'kickstart.plugins.git-worktree',
 
+  require 'kickstart.plugins.worktree',
+
   require 'kickstart.plugins.todo-comments',
 
   require 'kickstart.plugins.outline',
@@ -62,7 +70,7 @@ require('lazy').setup({
 
   require 'kickstart.plugins.codecompanion',
 
-  require 'kickstart.plugins.copilotchat',
+  -- require 'kickstart.plugins.sidekick',
 
   require 'kickstart.plugins.copilot',
 
@@ -84,6 +92,8 @@ require('lazy').setup({
 
   require 'kickstart.plugins.snipe',
 
+  require 'kickstart.plugins.spider',
+
   require 'kickstart.plugins.windows',
 
   require 'kickstart.plugins.ts-tool',
@@ -96,21 +106,19 @@ require('lazy').setup({
 
   require 'kickstart.plugins.kulala',
 
-  require 'kickstart.plugins.ts-node-action',
-
   require 'kickstart.plugins.vectorcode',
 
   -- require 'kickstart/plugins/linting',
 
   require 'kickstart.plugins.mini',
 
-  require 'kickstart.plugins.mini-diff',
-
   require 'kickstart.plugins.suda',
 
   require 'kickstart.plugins.cool',
 
   require 'kickstart.plugins.treesitter',
+
+  require 'kickstart.plugins.treecontext',
 
   require 'kickstart.plugins.autopairs',
 

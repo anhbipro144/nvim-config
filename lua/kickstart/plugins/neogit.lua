@@ -6,7 +6,7 @@ return {
     "nvim-telescope/telescope.nvim",
   },
   keys = {
-    { '<leader>gs', '<cmd>Neogit<CR>', mode = 'n', desc = 'Open Neogit' }
+    { '<leader>gg', '<cmd>Neogit<CR>', mode = 'n', desc = 'Open Neogit' }
   },
   cmd = "Neogit",
   config = function()
@@ -18,7 +18,7 @@ return {
         return telescope_config.extensions.fzf.native_fzf_sorter()
       end,
 
-      graph_style = "unicode",
+      graph_style = "kitty",
       integrations = {
         diffview = true,
         telescope = true

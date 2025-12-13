@@ -22,70 +22,74 @@ return {
 	-- 	end
 	-- },
 	--
-	-- {
-	-- 	"rebelot/kanagawa.nvim",
-	-- 	config = function()
-	-- 		require('kanagawa').setup({
-	-- 			globalStatus = true,
-	-- 			compile = true, -- enable compiling the colorscheme
-	-- 			undercurl = true, -- enable undercurls
-	-- 			-- commentStyle = { italic = true },
-	-- 			-- keywordStyle = { italic = true },
-	-- 			-- statementStyle = { bold = true },
-	-- 			transparent = true, -- do not set background color
-	-- 			-- dimInactive = true, -- dim inactive window `:h hl-NormalNC`
-	-- 			-- terminalColors = true, -- define vim.g.terminal_color_{0,17}
-	-- 			colors = { -- add/modify theme and palette colors
-	-- 				theme = {
-	-- 					all = {
-	-- 						ui = {
-	-- 							bg_gutter = "none",
-	-- 						}
-	-- 					}
-	-- 				},
-	-- 			},
-	-- 			overrides = function(colors)
-	-- 				local theme = colors.theme
-	-- 				return {
-	-- 					NormalFloat = { bg = "none", fg = "none", },
-	-- 					FloatBorder = { bg = "none", fg = "none" },
-	-- 					FloatTitle = { bg = "none", fg = "none" },
-	-- 					-- Pmenu = { blend = vim.o.pumblend },
-	--
-	--
-	--
-	--
-	--
-	-- 					-- Save an hlgroup with dark background and dimmed foreground
-	-- 					-- so that you can use it where your still want darker windows.
-	-- 					-- E.g.: autocmd TermOpen * setlocal winhighlight=Normal:NormalDark
-	-- 					NormalDark = { fg = theme.ui.fg_dim, bg = theme.ui.bg_m3 },
-	--
-	-- 					-- Popular plugins that open floats will link to NormalFloat by default;
-	-- 					-- set their background accordingly if you wish to keep them dark and borderless
-	-- 					LazyNormal = { bg = theme.ui.bg_m3, fg = theme.ui.fg_dim },
-	-- 					MasonNormal = { bg = theme.ui.bg_m3, fg = theme.ui.fg_dim },
-	--
-	-- 					TelescopeTitle = { fg = theme.ui.special, bold = true },
-	-- 					TelescopePromptNormal = { bg = theme.ui.bg_p1 },
-	-- 					TelescopePromptBorder = { fg = theme.ui.bg_p1, bg = theme.ui.bg_p1 },
-	-- 					TelescopeResultsNormal = { fg = theme.ui.fg_dim, bg = theme.ui.bg_m1 },
-	-- 					TelescopeResultsBorder = { fg = theme.ui.bg_m1, bg = theme.ui.bg_m1 },
-	-- 					TelescopePreviewNormal = { bg = theme.ui.bg_dim },
-	-- 					TelescopePreviewBorder = { bg = theme.ui.bg_dim, fg = theme.ui.bg_dim },
-	-- 				}
-	-- 			end,
-	-- 			theme = "wave", -- Load "wave" theme when 'background' option is not set
-	-- 			background = { -- map the value of 'background' option to a theme
-	-- 				dark = "dragon", -- try "dragon" !
-	-- 				light = "lotus"
-	-- 			},
-	-- 		})
-	--
-	--
-	-- 		vim.cmd.colorscheme("kanagawa")
-	-- 	end
-	-- },
+	{
+		"rebelot/kanagawa.nvim",
+		config = function()
+
+			local kanagawa_opts = {
+				theme = "wave",
+				transparent = true,
+				colors = {
+					theme = {
+						all = { ui = { bg_gutter = "none" } },
+					},
+				},
+				overrides = function(_)
+					return {
+						-- gutter pieces
+						SignColumn   = { bg = "NONE" },
+						LineNr       = { bg = "NONE" },
+						CursorLineNr = { bg = "NONE" },
+						FoldColumn   = { bg = "NONE" },
+
+						-- statusline
+						StatusLine   = { bg = "NONE" },
+						StatusLineNC = { bg = "NONE" },
+
+						-- keep window borders visible without a blocky bg
+						WinSeparator = { bg = "NONE" },
+					}
+				end,
+			}
+			require('kanagawa').setup(kanagawa_opts)
+
+			-- setup must be called before loading
+			vim.cmd("colorscheme kanagawa")
+
+
+			vim.keymap.set("n", "<leader>uu", function()
+				kanagawa_opts.transparent = not kanagawa_opts.transparent
+				require('kanagawa').setup(kanagawa_opts)
+				vim.cmd("colorscheme kanagawa")
+			end, { desc = "Toggle Kanagawa transparency" })
+
+			local function make_telescope_transparent()
+				vim.api.nvim_set_hl(0, "NormalFloat", { bg = "NONE" })
+				vim.api.nvim_set_hl(0, "FloatBorder", { bg = "NONE" })
+				vim.api.nvim_set_hl(0, "FloatTitle", { bg = "NONE" })
+
+				-- local groups = {
+				-- 	"NormalFloat", "FloatBorder",
+				-- 	"TelescopeNormal", "TelescopeBorder",
+				-- 	"TelescopePromptNormal", "TelescopePromptBorder",
+				-- 	"TelescopeResultsNormal", "TelescopeResultsBorder",
+				-- 	"TelescopePreviewNormal", "TelescopePreviewBorder",
+				-- }
+				local groups = {
+					"TelescopeNormal", "TelescopeBorder", "TelescopeTitle",
+					"TelescopePromptNormal", "TelescopePromptBorder", "TelescopePromptTitle",
+					"TelescopeResultsNormal", "TelescopeResultsBorder", "TelescopeResultsTitle",
+					"TelescopePreviewNormal", "TelescopePreviewBorder", "TelescopePreviewTitle",
+				}
+				for _, g in ipairs(groups) do vim.api.nvim_set_hl(0, g, { bg = "NONE" }) end
+			end
+
+			make_telescope_transparent()
+			vim.api.nvim_create_autocmd("ColorScheme", {
+				callback = make_telescope_transparent,
+			})
+		end
+	},
 	-- {
 	-- 	"rose-pine/neovim",
 	-- 	name = "rose-pine",
@@ -129,21 +133,47 @@ return {
 	-- 		vim.cmd.colorscheme("tokyonight");
 	-- 	end
 	-- },
-	{
-		"catppuccin/nvim",
-		name = "catppuccin",
-		priority = 1000,
-
-		config = function()
-			require("catppuccin").setup({
-				flavour = "frappe", -- latte, frappe, macchiato, mocha
-				transparent_background = true, -- disables setting the background color.
-				integrations = { blink_cmp = true },
-			})
-
-
-			vim.cmd.colorscheme "catppuccin"
-		end
-	}
+	-- {
+	-- 	"catppuccin/nvim",
+	-- 	name = "catppuccin",
+	-- 	priority = 1000,
+	--
+	-- 	config = function()
+	-- 		require("catppuccin").setup({
+	-- 			flavour = "mocha", -- latte, frappe, macchiato, mocha
+	-- 			transparent_background = true,
+	-- 			integrations = { blink_cmp = true },
+	-- 		})
+	--
+	--
+	-- 		vim.cmd.colorscheme "catppuccin"
+	--
+	--
+	-- 		vim.keymap.set("n", "<leader>uu", function()
+	-- 			local cat = require("catppuccin")
+	-- 			cat.options.transparent_background = not cat.options.transparent_background
+	-- 			cat.compile()
+	-- 			vim.cmd.colorscheme(vim.g.colors_name)
+	-- 		end, { desc = "Toggle Catppuccin transparency" })
+	--
+	-- 		local function make_telescope_transparent()
+	-- 			local groups = {
+	-- 				"NormalFloat", "FloatBorder",
+	-- 				"TelescopeNormal", "TelescopeBorder",
+	-- 				"TelescopePromptNormal", "TelescopePromptBorder",
+	-- 				"TelescopeResultsNormal", "TelescopeResultsBorder",
+	-- 				"TelescopePreviewNormal", "TelescopePreviewBorder",
+	-- 			}
+	-- 			for _, g in ipairs(groups) do
+	-- 				vim.api.nvim_set_hl(0, g, { bg = "NONE" })
+	-- 			end
+	-- 		end
+	--
+	-- 		make_telescope_transparent()
+	-- 		vim.api.nvim_create_autocmd("ColorScheme", {
+	-- 			callback = make_telescope_transparent,
+	-- 		})
+	-- 	end
+	-- }
 
 }

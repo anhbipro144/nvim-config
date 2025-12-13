@@ -20,9 +20,6 @@ return {
   --   end
   --
   -- }
-  --
-  --
-  -- Lua
   {
     "folke/persistence.nvim",
     event = "VimEnter", -- this will only start session saving when an actual file was opened
@@ -30,7 +27,6 @@ return {
       require 'persistence'.setup {
         options = { --[[<other options>,]] 'globals' },
         pre_save = function() vim.api.nvim_exec_autocmds('User', { pattern = 'SessionSavePre' }) end,
-
       }
 
       vim.keymap.set("n", "<leader>qs", function() require("persistence").load() end)

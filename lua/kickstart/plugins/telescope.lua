@@ -4,8 +4,10 @@ return {
     -- event = 'VimEnter',
     -- branch = '0.1.x',
     -- tag = '0.1.8',
+    cmd          = "Telescope",
     dependencies = {
       'nvim-lua/plenary.nvim',
+      "Juksuu/worktrees.nvim",
       {
         'nvim-telescope/telescope-fzf-native.nvim',
         build = "make",
@@ -16,13 +18,14 @@ return {
       { 'nvim-telescope/telescope-ui-select.nvim' },
       { 'nvim-tree/nvim-web-devicons',            enabled = vim.g.have_nerd_font },
     },
-    config = function()
+    config       = function()
       require("git-worktree").setup()
-
+      require("worktrees").setup()
       -- See `:help telescope` and `:help telescope.setup()`
       local actions = require("telescope.actions")
       local telescope = require("telescope")
       local builtin = require('telescope.builtin')
+      local ttheme = require('telescope.themes')
 
       local theme = {
         ivy = "ivy",
@@ -41,10 +44,11 @@ return {
 
       telescope.setup({
         defaults = {
+          winblend = 0,
           theme = theme.dropdown,
           path_display = {
             filename_first = {
-              reverse_directories = false
+              reverse_directories = true
             }
           },
           file_ignore_patterns = { "^node_modules/", "^dist/", "^.git/", "^.next/" },
@@ -104,6 +108,7 @@ return {
 
 
       telescope.load_extension("git_worktree")
+      telescope.load_extension("worktrees")
       pcall(telescope.load_extension, 'fzf')
       pcall(telescope.load_extension, 'ui-select')
 
@@ -114,13 +119,18 @@ return {
       vim.keymap.set('n', '<leader>sd', builtin.diagnostics, { desc = '[S]earch [D]iagnostics' })
 
       vim.keymap.set('n', '<leader>sa', builtin.git_files, { desc = '[S]earch Git File' })
-      vim.keymap.set('n', '<leader>sf', builtin.find_files, { desc = '[S]earch All [F]iles' })
+
+      -- Disabled in favor of fff.nvim
+      -- vim.keymap.set('n', '<leader>sf', builtin.find_files, { desc = '[S]earch All [F]iles' })
       vim.keymap.set('n', '<leader>sb', builtin.current_buffer_fuzzy_find, { desc = '[S]earch Current [B]uffer' })
 
       vim.keymap.set('n', '<leader>sh', builtin.help_tags, { desc = '[S]earch [H]elp' })
       vim.keymap.set('n', '<leader>sk', builtin.keymaps, { desc = '[S]earch [K]eymaps' })
       vim.keymap.set('n', '<leader>sw', builtin.grep_string, { desc = '[S]earch current [W]ord' })
 
+
+      vim.keymap.set("n", "<Leader>gw", telescope.extensions.worktrees.list_worktrees,
+        { desc = "Open Git worktree" })
 
       vim.keymap.set("n", "<Leader>sr", "<CMD>lua require('telescope').extensions.git_worktree.git_worktrees()<CR>",
         { desc = "Open Git worktree" })

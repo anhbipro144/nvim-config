@@ -1,36 +1,26 @@
 return {
-  'romgrk/barbar.nvim',
-  dependencies = {
-    'famiu/bufdelete.nvim'
-
-  },
+  "nvim-mini/mini.nvim",
+  version = false,
   config = function()
-    require("barbar").setup({
-      animation = false,
-      icons = {
-        filetype = {
-          custom_colors = true
-        },
-        button = '',
-        separator = { right = '', left = '▎' },
-      }
+    require("mini.bufremove").setup() -- no opts needed
+
+    -- Close current buffer (keep layout)
+    vim.keymap.set("n", "<S-B><S-D>", function()
+      require("mini.bufremove").delete(0, false)  -- false = don't force
+    end, { silent = true })
+
+    -- Simple “restore last closed buffer” stack (no plugin)
+    local closed = {}
+    vim.api.nvim_create_autocmd("BufDelete", {
+      callback = function(args)
+        -- record file path if it exists
+        local name = vim.api.nvim_buf_get_name(args.buf)
+        if name ~= "" then table.insert(closed, 1, name) end
+      end,
     })
-
-
-    vim.opt.showtabline = 0
-
-    -- Buffer management
-    -- vim.keymap.set('n', '<S-k>', ':BufferMoveNext<CR>', { noremap = true, silent = true })     -- Move buffer 1 step to the right
-    -- vim.keymap.set('n', '<S-j>', ':BufferMovePrevious<CR>', { noremap = true, silent = true }) --  Move buffer 1 step to the left
-
-
-    vim.keymap.set('n', '<S-B><S-D>', ':BufferClose<CR>', { noremap = true, silent = true })   --  Close current buffer
-    vim.keymap.set('n', '<S-B><S-R>', ':BufferRestore<CR>', { noremap = true, silent = true }) --  Restore closed buffer
-
-
-    -- vim.keymap.set('n', '<S-l>', ':BufferNext<CR>', { noremap = true, silent = true })     -- Go to to next buffer (on the right)
-    -- vim.keymap.set('n', '<S-h>', ':BufferPrevious<CR>', { noremap = true, silent = true }) -- Go to the previous buffer (on the left)
+    vim.keymap.set("n", "<S-B><S-R>", function()
+      local path = table.remove(closed, 1)
+      if path then vim.cmd.edit(vim.fn.fnameescape(path)) end
+    end, { silent = true })
   end,
-  version = '^1.0.0',
-
 }
