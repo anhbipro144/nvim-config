@@ -46,8 +46,6 @@ require('lazy').setup({
 
   require 'kickstart.plugins.obsidian',
 
-  require 'kickstart.plugins.grapple',
-
   require 'kickstart.plugins.persistence',
 
   require 'kickstart.plugins.hbac',
@@ -57,6 +55,8 @@ require('lazy').setup({
   require 'kickstart.plugins.toggleterm',
 
   require 'kickstart.plugins.git-worktree',
+
+  require 'kickstart.plugins.git-pipelines',
 
   require 'kickstart.plugins.todo-comments',
 
@@ -68,13 +68,9 @@ require('lazy').setup({
 
   require 'kickstart.plugins.codecompanion',
 
-  -- require 'kickstart.plugins.sidekick',
-
-  require 'kickstart.plugins.copilot',
-
   -- require 'lua.kickstart.plugins.codecompanion-history',
 
-  -- require 'kickstart/plugins/avante',
+  require 'kickstart.plugins.copilot',
 
   require 'kickstart.plugins.prisma',
 
@@ -88,7 +84,7 @@ require('lazy').setup({
 
   -- require 'kickstart/plugins/blink',
 
-  require 'kickstart.plugins.snipe',
+  -- require 'kickstart.plugins.snipe',
 
   require 'kickstart.plugins.spider',
 
@@ -125,6 +121,35 @@ require('lazy').setup({
   require 'kickstart.plugins.formatting',
 
   require 'kickstart.plugins.neogit',
+
+  require 'kickstart.plugins.timber',
+
+  require 'kickstart.plugins.hawtkeys',
+
+  require 'kickstart.plugins.octo',
+
+  -- require 'kickstart.plugins.snacks',
+
+  require 'kickstart.plugins.mcphub',
+
+  require 'kickstart.plugins.dressing',
+
+  require 'kickstart.plugins.jillra',
+
+  require 'kickstart.plugins.jira',
+
+  require 'kickstart.plugins.bento',
+
+  require 'kickstart.plugins.java-lsp',
+
+  -- require 'kickstart.plugins.sonarqube-connect',
+
+  require 'kickstart.plugins.sonarqube',
+
+  require 'kickstart.plugins.tracker',
+
+  require 'kickstart.plugins.nvim-puppeteer',
+
 
 }, {
   ui = {

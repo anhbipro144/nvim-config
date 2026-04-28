@@ -22,18 +22,18 @@ nmap('<leader>n', vim.diagnostic.goto_next, true)
 nmap('<leader>N', vim.diagnostic.goto_prev, true)
 
 -- Move around split windows with less keystrokes
-nmap('<c-h>', ':wincmd h<cr>', true)
-nmap('<c-j>', ':wincmd j<cr>', true)
-nmap('<c-k>', ':wincmd k<cr>', true)
-nmap('<c-l>', ':wincmd l<cr>', true)
+-- nmap('<c-h>', ':wincmd h<cr>', true)
+-- nmap('<c-j>', ':wincmd j<cr>', true)
+-- nmap('<c-k>', ':wincmd k<cr>', true)
+-- nmap('<c-l>', ':wincmd l<cr>', true)
 
 -- Make working with terminal windows easier
 local exit_term = '<c-\\><c-n>'
 tmap('<esc>', exit_term, true)
-tmap('<c-h>', exit_term..':wincmd h<cr>', true)
-tmap('<c-j>', exit_term..':wincmd j<cr>', true)
-tmap('<c-k>', exit_term..':wincmd k<cr>', true)
-tmap('<c-l>', exit_term..':wincmd l<cr>', true)
+-- tmap('<c-h>', exit_term..':wincmd h<cr>', true)
+-- tmap('<c-j>', exit_term..':wincmd j<cr>', true)
+-- tmap('<c-k>', exit_term..':wincmd k<cr>', true)
+-- tmap('<c-l>', exit_term..':wincmd l<cr>', true)
 
 -- Create terminal window
 nmap('<leader>t', function()

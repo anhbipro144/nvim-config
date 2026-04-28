@@ -1,0 +1,9 @@
+return {
+  "Rtarun3606k/TakaTime",
+  lazy = false,
+  config = function()
+    require("taka-time").setup({
+        debug = false
+    })
+  end,
+}

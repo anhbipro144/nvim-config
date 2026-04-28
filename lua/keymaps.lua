@@ -21,10 +21,10 @@ vim.keymap.set("n", "-", "<C-x>")
 vim.keymap.set("n", "<C-a>", "gg<S-v>G")
 
 --  See `:help wincmd` for a list of all window commands
-vim.keymap.set('n', '<C-h>', '<C-w>h', { desc = 'Move focus to the left window' })
-vim.keymap.set('n', '<C-l>', '<C-w>l', { desc = 'Move focus to the right window' })
-vim.keymap.set('n', '<C-j>', '<C-w>j', { desc = 'Move focus to the lower window' })
-vim.keymap.set('n', '<C-k>', '<C-w>k', { desc = 'Move focus to the upper window' })
+-- vim.keymap.set('n', '<C-h>', '<C-w>h', { desc = 'Move focus to the left window' })
+-- vim.keymap.set('n', '<C-l>', '<C-w>l', { desc = 'Move focus to the right window' })
+-- vim.keymap.set('n', '<C-j>', '<C-w>j', { desc = 'Move focus to the lower window' })
+-- vim.keymap.set('n', '<C-k>', '<C-w>k', { desc = 'Move focus to the upper window' })
 
 -- Delete word in insert mode
 vim.keymap.set('i', '<C-BS>', '<C-W>', { noremap = true, silent = true })
@@ -52,7 +52,7 @@ vim.keymap.set('v', '<C-s>', '<Esc>:w<CR>gv', { noremap = true, silent = true })
 -- Paste without losing buffer
 vim.keymap.set('x', "<leader>p", "\"_dP")
 
- -- Remap Ctrl + z to undo in insert mode
+-- Remap Ctrl + z to undo in insert mode
 vim.keymap.set('i', '<C-z>', '<C-o>u', { noremap = true, silent = true })
 
 -- Split
@@ -65,10 +65,10 @@ vim.keymap.set('n', '<S-W><S-D>', ':close<CR>', { noremap = true, silent = true 
 vim.keymap.set("n", "<leader>ql", function() require("persistence"):load({ last = true }) end) -- Load the last session
 vim.keymap.set("n", "<leader>qs", function() require("persistence"):load() end)                -- Load the session for the current directory
 
- -- Open Mason
+-- Open Mason
 vim.keymap.set("n", "<leader>ms", ':Mason<CR>', { noremap = true, silent = true })
 
-  -- Open Lazy
+-- Open Lazy
 vim.keymap.set("n", "<leader>lz", ':Lazy<CR>', { noremap = true, silent = true })
 
 -- Highlight when yanking
@@ -79,3 +79,45 @@ vim.api.nvim_create_autocmd('TextYankPost', {
     vim.highlight.on_yank()
   end,
 })
+
+vim.keymap.set("n", "<leader>gn", function()
+  vim.ui.input({ prompt = "PR ID: " }, function(pr_id)
+    if not pr_id or pr_id == "" then
+      return
+    end
+
+    -- Get the exact PR URL from the current repo
+    local pr_url = vim.fn.system({
+      "gh",
+      "pr",
+      "view",
+      pr_id,
+      "--json",
+      "url",
+      "--jq",
+      ".url",
+    })
+
+    pr_url = vim.trim(pr_url)
+
+    if vim.v.shell_error ~= 0 or pr_url == "" then
+      vim.notify("Could not resolve PR URL via gh", vim.log.levels.ERROR)
+      return
+    end
+
+    local message = string.format(
+      "Nhờ a <users/103484726831388426055> check giúp e <%s|PR này> nha",
+      pr_url
+    )
+
+    vim.fn.jobstart({
+      "gog",
+      "chat",
+      "messages",
+      "send",
+      "spaces/AAQA0O9TFxs",
+      "--text",
+      message,
+    }, { detach = false })
+  end)
+end, { desc = "Send to NPRD Internal" })

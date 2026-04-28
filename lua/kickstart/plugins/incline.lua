@@ -13,6 +13,26 @@ return {
         end
         local ft_icon, ft_color = devicons.get_icon_color(filename)
 
+        local function get_git_pipelines_label()
+          if not props.focused then
+            return {}
+          end
+
+          if not _G.GitPipelines or type(_G.GitPipelines.statusline) ~= 'function' then
+            return {}
+          end
+
+          local label = _G.GitPipelines.statusline()
+          if type(label) ~= 'string' or label == '' then
+            return {}
+          end
+
+          return {
+            { '┊ ' },
+            { label .. ' ', gui = 'bold' },
+          }
+        end
+
         local function get_git_diff()
           local icons = { removed = '', changed = '', added = '' }
           local signs = vim.b[props.buf].gitsigns_status_dict
@@ -51,10 +71,10 @@ return {
         return {
           { get_diagnostic_label() },
           { get_git_diff() },
-          { (ft_icon or '') .. ' ', guifg = ft_color,                                         guibg = 'none' },
-          { filename .. ' ',        gui = vim.bo[props.buf].modified and 'bold,italic' or nil },
-          { vim.bo[props.buf].modified and " " or "",
-          }
+          { get_git_pipelines_label() },
+          { (ft_icon or '') .. ' ', guifg = ft_color, guibg = 'none' },
+          { filename .. ' ', gui = vim.bo[props.buf].modified and 'bold,italic' or nil },
+          { vim.bo[props.buf].modified and ' ' or '' },
           -- { '┊  ' .. vim.api.nvim_win_get_number(props.win), group = 'DevIconWindows' },
         }
       end,

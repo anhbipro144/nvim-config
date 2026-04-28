@@ -22,10 +22,37 @@ return {
 	-- 	end
 	-- },
 	--
+	-- {
+	-- 	'AlexvZyl/nordic.nvim',
+	-- 	lazy = false,
+	-- 	priority = 1000,
+	-- 	config = function()
+	-- 		require('nordic').load()
+	-- 	end
+	-- },
+	-- {
+	-- 	"wtfox/jellybeans.nvim",
+	-- 	lazy = false,
+	-- 	priority = 1000,
+	-- 	opts = {}, -- Optional
+	-- 	config = function()
+	-- 		vim.cmd [[colorscheme jellybeans-mono]]
+	-- 	end
+	-- },
+	{
+		"kwakzalver/duckytype.nvim",
+		config = function()
+			local ducke = require('duckytype')
+			ducke.setup {}
+
+			vim.keymap.set('n', "<leader>dt", function()
+				ducke.Start("english_common")
+			end, { noremap = true })
+		end
+	},
 	{
 		"rebelot/kanagawa.nvim",
 		config = function()
-
 			local kanagawa_opts = {
 				theme = "wave",
 				transparent = true,
@@ -119,20 +146,6 @@ return {
 	-- 		vim.cmd.colorscheme("monokai-pro");
 	-- 	end
 	-- },
-	--
-	-- {
-	-- 	"folke/tokyonight.nvim",
-	-- 	lazy = false,
-	-- 	priority = 1000,
-	-- 	opts = {},
-	-- 	config = function()
-	-- 		require("tokyonight").setup({
-	-- 			transparent = true,
-	--
-	-- 		})
-	-- 		vim.cmd.colorscheme("tokyonight");
-	-- 	end
-	-- },
 	-- {
 	-- 	"catppuccin/nvim",
 	-- 	name = "catppuccin",
@@ -175,5 +188,4 @@ return {
 	-- 		})
 	-- 	end
 	-- }
-
 }

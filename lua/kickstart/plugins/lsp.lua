@@ -70,8 +70,68 @@ return {
         filetypes = { "json" }
       },
       ["nil"] = {},
-      pyright = {},
+      pyright = {
+        settings = {
+          python = {
+            venvPath = ".",
+            analysis = {
+              extraPaths = { "." },
+              typeCheckingMode = "off",
+
+              diagnosticSeverityOverrides = {
+                reportUntypedFunctionDecorator = "none",
+                reportUntypedClassDecorator = "none",
+                reportCallIssue = "none",
+              },
+            },
+          },
+        },
+      },
+      black = {},
+      jdtls = {},
+      -- ["sonarlint-language-server"] = {
+      --   -- server = {
+      --   --   cmd = {
+      --   --     "sonarlint-language-server",
+      --   --     "-stdio",
+      --   --     "-analyzers",
+      --   --     vim.fn.expand("$MASON/share/sonarlint-analyzers/sonarjs.jar"),
+      --   --     vim.fn.expand("$MASON/share/sonarlint-analyzers/sonarpython.jar"),
+      --   --     vim.fn.expand("$MASON/share/sonarlint-analyzers/sonarjava.jar"),
+      --   --     -- add more analyzers as needed
+      --   --   },
+      --   --
+      --   --   -- IMPORTANT: these settings names are from the SonarLint LS itself.
+      --   --   -- They include SonarCloud connections + project binding.
+      --   --   -- settings = {
+      --   --   --   ["sonarlint.connectedMode.connections.sonarcloud"] = {
+      --   --   --     {
+      --   --   --       organizationKey = "YOUR_ORG_KEY",
+      --   --   --       token = os.getenv("SONARCLOUD_TOKEN"),   -- don't hardcode tokens in config 🙂
+      --   --   --       -- connectionId = "optional-if-you-have-multiple"
+      --   --   --       -- disableNotifications = true,
+      --   --   --     },
+      --   --   --   },
+      --   --   --
+      --   --   --   ["sonarlint.connectedMode.project"] = {
+      --   --   --     projectKey = "YOUR_SONARCLOUD_PROJECT_KEY",
+      --   --   --     -- connectionId = "only if you set multiple connections above"
+      --   --   --   },
+      --   --   -- },
+      --   -- },
+      --   --
+      --   filetypes = {
+      --     "javascript", "javascriptreact",
+      --     "typescript", "typescriptreact",
+      --     "python",
+      --     "java",
+      --     -- add more if you added the matching analyzer jar
+      --   },
+      --
+      -- }
     }
+    -- after you setup lspconfig
+    -- require("sonarlint").setup()
 
     for name, manual_cfg in pairs(manual_servers) do
       pcall(require, "lspconfig.server_configurations." .. name)
@@ -89,7 +149,8 @@ return {
         function(server_name)
           local server = servers[server_name] or {}
           server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
-          vim.lsp.config[server_name].setup(server)
+          vim.lsp.config(server_name, server)
+          vim.lsp.enable(server_name)
         end,
       }
     })
@@ -129,7 +190,7 @@ return {
           vim.lsp.buf.definition()
         end, '[G]oto definition [V]ertical split')
 
-        map('gr', telescope_builtin.lsp_references, '[G]oto [R]eferences')
+        map('<leader>ee', telescope_builtin.lsp_references, '[G]oto [R]eferences')
 
         -- Jump to the implementation of the word under your cursor.
         map('gi', telescope_builtin.lsp_implementations, '[G]oto [I]mplementation')

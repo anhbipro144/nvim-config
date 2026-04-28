@@ -1,17 +1,3 @@
-function LogVariable()
-  local variable_name = vim.fn.expand('<cword>')
-
-  local log_statement = 'console.log("' .. variable_name .. ' >>>> ", ' .. variable_name .. ');'
-
-  local line_number = vim.api.nvim_win_get_cursor(0)[1]
-
-  vim.api.nvim_buf_set_lines(0, line_number, line_number, false, { log_statement })
-end
-
--- Bind the LogVariable function to <leader>l
-vim.keymap.set('n', '<leader>l', ':lua LogVariable()<CR>', { noremap = true, silent = true })
-
-
 -- Filetype detection setup
 vim.filetype.add({
   pattern = {

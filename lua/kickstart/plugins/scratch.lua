@@ -9,7 +9,7 @@ return {
     })
 
 
-    vim.keymap.set("n", "<leader>rs", "<cmd>Scratch<cr>")
+    vim.keymap.set("n", "<leader>rs", "<cmd>ScratchWithName<cr>")
     vim.keymap.set("n", "<leader>ro", "<cmd>ScratchOpen<cr>")
   end
 }

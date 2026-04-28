@@ -1,9 +1,10 @@
 return {
   "NeogitOrg/neogit",
   dependencies = {
+    "stevearc/dressing.nvim",
     "nvim-lua/plenary.nvim",
     "sindrets/diffview.nvim",
-    "nvim-telescope/telescope.nvim",
+    -- "nvim-telescope/telescope.nvim",
   },
   keys = {
     { '<leader>gg', '<cmd>Neogit<CR>', mode = 'n', desc = 'Open Neogit' }
@@ -11,17 +12,14 @@ return {
   cmd = "Neogit",
   config = function()
     local neogit = require("neogit")
-    local telescope_config = require("telescope")
+    -- local telescope_config = require("telescope")
 
     neogit.setup({
-      telescope_sorter = function()
-        return telescope_config.extensions.fzf.native_fzf_sorter()
-      end,
-
+      telescope_sorter = nil,
       graph_style = "kitty",
       integrations = {
         diffview = true,
-        telescope = true
+        telescope = nil
       },
 
       mappings = {

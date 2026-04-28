@@ -66,15 +66,23 @@ return {
   config = function()
     local neotest = require("neotest")
 
+    -- vim.opt.signcolumn = "yes"
     neotest.setup({
+      status = {
+        enabled = true,
+        signs = true,
+        virtual_text = false,
+      },
       quickfix = {
         enabled = false,
       },
       adapters = {
         require('neotest-jest')({
           jestCommand = "npm test --",
-          jestConfigFile = "custom.jest.config.ts",
-          env = { CI = true },
+          jestArguments = function(defaultArguments, context)
+            return defaultArguments
+          end,
+          jestConfigFile = "jest.config.js",
           cwd = function()
             return vim.fn.getcwd()
           end,
@@ -83,11 +91,18 @@ return {
     })
 
 
+    -- vim.api.nvim_create_autocmd("BufRead", {
+    --   pattern = { "*.test.ts", "*.test.tsx", "*.spec.ts", "*.spec.tsx", "*.test.js", "*.test.jsx" },
+    --   callback = function(args)
+    --     vim.bo[args.buf].buflisted = true
+    --   end,
+    -- })
+
     vim.keymap.set("n", "<leader>np", function()
       neotest.output.open({
         enter = true,
         last_run = true,
-        auto_close = true, -- rời window là tự đóng (tùy chọn)
+        auto_close = true,
         open_win = function(opts)
           local uiw, uih = vim.o.columns, vim.o.lines
           local width    = math.floor((opts.width or uiw * 0.9))
@@ -95,7 +110,6 @@ return {
           local row      = math.floor((uih - height) / 2 - 1)
           local col      = math.floor((uiw - width) / 2)
 
-          -- tạo win trước (buf tạm thời, sẽ bị neotest thay bằng buf output)
           local tmp      = vim.api.nvim_create_buf(false, true)
           local win      = vim.api.nvim_open_win(tmp, true, {
             relative = "editor",
@@ -109,7 +123,6 @@ return {
             title_pos = "center",
           })
 
-          -- ĐỢI neotest gắn buffer output vào window rồi mới map 'q' cho đúng buffer
           vim.schedule(function()
             if not vim.api.nvim_win_is_valid(win) then return end
             local out_buf = vim.api.nvim_win_get_buf(win)
