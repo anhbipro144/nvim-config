@@ -82,7 +82,7 @@ return {
             previewer = false,
           },
           lsp_references            = {
-            theme = theme.dropdown,
+            theme = theme.ivy,
           },
           current_buffer_fuzzy_find = {
             theme = theme.dropdown,
