@@ -9,9 +9,8 @@ return {
     require("atlas").setup({
       bitbucket = {}, -- See configuration below
       jira = {
-        token =
-        "",
-        email = "lanh.nguyen.tpv@one-line.com",
+        token = os.getenv("JIRA_API_TOKEN"),
+        email = os.getenv("JIRA_USER"),
         base_url = "https://oneline.atlassian.net",
 
         ---@type JiraViewConfig[]
