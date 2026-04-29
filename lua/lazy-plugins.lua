@@ -152,6 +152,8 @@ require('lazy').setup({
 
   require 'kickstart.plugins.dadbod',
 
+  require 'kickstart.plugins.duckytype',
+
 
 }, {
   ui = {

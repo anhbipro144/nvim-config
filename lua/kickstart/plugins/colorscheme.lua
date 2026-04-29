@@ -40,17 +40,6 @@ return {
 	-- 	end
 	-- },
 	{
-		"kwakzalver/duckytype.nvim",
-		config = function()
-			local ducke = require('duckytype')
-			ducke.setup {}
-
-			vim.keymap.set('n', "<leader>dt", function()
-				ducke.Start("english_common")
-			end, { noremap = true })
-		end
-	},
-	{
 		"rebelot/kanagawa.nvim",
 		config = function()
 			local kanagawa_opts = {
