@@ -150,6 +150,8 @@ require('lazy').setup({
 
   require 'kickstart.plugins.nvim-puppeteer',
 
+  require 'kickstart.plugins.dadbod',
+
 
 }, {
   ui = {
