@@ -84,8 +84,6 @@ require('lazy').setup({
 
   -- require 'kickstart/plugins/blink',
 
-  -- require 'kickstart.plugins.snipe',
-
   require 'kickstart.plugins.spider',
 
   require 'kickstart.plugins.windows',
