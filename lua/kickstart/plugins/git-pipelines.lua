@@ -1,5 +1,6 @@
+---@diagnostic disable: undefined-field
 return {
-  dir = vim.fn.expand '~/personal/hustles/git-pipelines.nvim',
+  url = 'anhbipro144/git-pipelines.git',
   name = 'git-pipelines',
   event = 'VeryLazy',
   opts = {},
