@@ -1,7 +1,6 @@
 ---@diagnostic disable: undefined-field
 return {
-  url = 'anhbipro144/git-pipelines.git',
-  name = 'git-pipelines',
+  'anhbipro144/git-pipelines',
   event = 'VeryLazy',
   opts = {},
   keys = {
