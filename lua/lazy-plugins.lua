@@ -142,7 +142,7 @@ require('lazy').setup({
 
   require 'kickstart.plugins.sonarqube',
 
-  require 'kickstart.plugins.nvim-puppeteer',
+  require 'kickstart.plugins.template-string',
 
   require 'kickstart.plugins.dadbod',
 
