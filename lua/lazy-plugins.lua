@@ -36,7 +36,7 @@ require('lazy').setup({
 
   require 'kickstart.plugins.image',
 
-  require 'kickstart.plugins.auto-save',
+  -- require 'kickstart.plugins.auto-save',
 
   require 'kickstart.plugins.move-line',
 
@@ -132,8 +132,6 @@ require('lazy').setup({
 
   require 'kickstart.plugins.dressing',
 
-  require 'kickstart.plugins.jillra',
-
   require 'kickstart.plugins.jira',
 
   require 'kickstart.plugins.bento',
@@ -143,8 +141,6 @@ require('lazy').setup({
   -- require 'kickstart.plugins.sonarqube-connect',
 
   require 'kickstart.plugins.sonarqube',
-
-  require 'kickstart.plugins.tracker',
 
   require 'kickstart.plugins.nvim-puppeteer',
 
