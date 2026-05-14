@@ -44,7 +44,7 @@ return {
 		config = function()
 			local kanagawa_opts = {
 				theme = "wave",
-				transparent = true,
+				transparent = false,
 				colors = {
 					theme = {
 						all = { ui = { bg_gutter = "none" } },
@@ -72,13 +72,6 @@ return {
 			-- setup must be called before loading
 			vim.cmd("colorscheme kanagawa")
 
-
-			vim.keymap.set("n", "<leader>uu", function()
-				kanagawa_opts.transparent = not kanagawa_opts.transparent
-				require('kanagawa').setup(kanagawa_opts)
-				vim.cmd("colorscheme kanagawa")
-			end, { desc = "Toggle Kanagawa transparency" })
-
 			local function make_telescope_transparent()
 				vim.api.nvim_set_hl(0, "NormalFloat", { bg = "NONE" })
 				vim.api.nvim_set_hl(0, "FloatBorder", { bg = "NONE" })
@@ -104,6 +97,13 @@ return {
 			vim.api.nvim_create_autocmd("ColorScheme", {
 				callback = make_telescope_transparent,
 			})
+
+			vim.keymap.set("n", "<leader>uu", function()
+				kanagawa_opts.transparent = not kanagawa_opts.transparent
+				require('kanagawa').setup(kanagawa_opts)
+				vim.cmd("colorscheme kanagawa")
+				make_telescope_transparent()
+			end, { desc = "Toggle Kanagawa transparency" })
 		end
 	},
 	-- {
