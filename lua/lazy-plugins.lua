@@ -148,6 +148,8 @@ require('lazy').setup({
 
   require 'kickstart.plugins.duckytype',
 
+  require 'kickstart.plugins.deltaview',
+
 
 }, {
   ui = {
