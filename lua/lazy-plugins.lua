@@ -146,7 +146,7 @@ require('lazy').setup({
 
   require 'kickstart.plugins.dadbod',
 
-  require 'kickstart.plugins.duckytype',
+  require 'kickstart.plugins.deltaview',
 
   require 'kickstart.plugins.deltaview',
 
