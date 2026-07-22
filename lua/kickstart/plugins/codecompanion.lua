@@ -22,7 +22,7 @@ return {
     codecompanion.setup({
       interactions = {
         chat = {
-          adapter = "copilot",
+          adapter = "codex",
           keymaps = {
             acp_session_options = {
               modes = {
@@ -42,7 +42,7 @@ return {
             },
             reasoning_effort = {
               modes = {
-                n = "gr",
+                n = "ge",
               },
               description = "Change Codex reasoning effort",
               callback = function(chat)
@@ -194,6 +194,7 @@ return {
               defaults = {
                 auth_method = "chatgpt",
                 session_config_options = {
+                  model = "gpt-5.6-terra",
                   thought_level = "Medium",
                 },
               },
