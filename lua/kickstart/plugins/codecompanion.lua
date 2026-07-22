@@ -1,7 +1,7 @@
 return {
   "olimorris/codecompanion.nvim",
-  tag = "v18.7.0",
-  pin = true,
+  -- tag = "v18.7.0",
+  -- pin = true,
   cmd = { "CodeCompanion" },
   keys = {
     { "`",          "<cmd>CodeCompanionChat Toggle<CR>", desc = "Open CodeCompanion chat buffer" },
@@ -23,6 +23,24 @@ return {
       interactions = {
         chat = {
           adapter = "copilot",
+          keymaps = {
+            acp_session_options = {
+              modes = {
+                n = "go",
+              },
+              description = "ACP session options",
+              callback = function(chat)
+                local config = require("codecompanion.config")
+                local slash_commands =
+                    require("codecompanion.interactions.chat.slash_commands")
+
+                slash_commands.run({
+                  label = "acp_session_options",
+                  config = config.interactions.chat.slash_commands.acp_session_options,
+                }, chat)
+              end,
+            },
+          },
           tools = {
             opts = {
               default_tools = {
@@ -40,6 +58,11 @@ return {
         },
       },
       display = {
+        action_palette = {
+          opts = {
+            show_preset_prompts = false,
+          },
+        },
         chat = {
           auto_scroll = false,
           window = {
