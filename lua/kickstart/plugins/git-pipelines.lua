@@ -1,6 +1,8 @@
 ---@diagnostic disable: undefined-field
 return {
-  'anhbipro144/git-pipelines',
+  -- 'anhbipro144/git-pipelines',
+  dir = "/home/neo/personal/hustles/git-pipelines.nvim",
+  name = "git-pipelines",
   event = 'VeryLazy',
   opts = {},
   keys = {

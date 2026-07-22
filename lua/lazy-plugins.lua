@@ -32,11 +32,11 @@ require('lazy').setup({
 
   require 'kickstart.plugins.scratch',
 
-  require 'kickstart.plugins.term-edit',
+  -- require 'kickstart.plugins.term-edit',
 
   require 'kickstart.plugins.image',
 
-  -- require 'kickstart.plugins.auto-save',
+  require 'kickstart.plugins.auto-save',
 
   require 'kickstart.plugins.move-line',
 
@@ -148,7 +148,7 @@ require('lazy').setup({
 
   require 'kickstart.plugins.deltaview',
 
-  require 'kickstart.plugins.deltaview',
+  require 'kickstart.plugins.vi-sql',
 
 
 }, {

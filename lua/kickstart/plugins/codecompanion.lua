@@ -72,7 +72,7 @@ return {
             auto_generate_title = true,
             title_generation_opts = {
               adapter = "copilot",
-              model = "gpt-5-mini",
+              model = "gpt-4.1",
               refresh_every_n_prompts = 3,
               max_refreshes = 3,
             },
@@ -125,6 +125,9 @@ return {
             return require("codecompanion.adapters").extend("codex", {
               defaults = {
                 auth_method = "chatgpt",
+                session_config_options = {
+                  thought_level = "Medium",
+                },
               },
               env = {
                 OPENAI_API_KEY = "OPENAI_API_KEY",
@@ -133,10 +136,20 @@ return {
           end,
           gemini_cli = function()
             return require("codecompanion.adapters").extend("gemini_cli", {
+              commands = {
+                default = {
+                  "gemini",
+                  "--experimental-acp",
+                },
+              },
               defaults = {
                 auth_method = "oauth-personal",
               },
             })
+          end,
+
+          copilot_acp = function()
+            return require("codecompanion.adapters").extend("copilot_acp", {})
           end,
         },
         http = {
@@ -159,7 +172,7 @@ return {
             return require("codecompanion.adapters").extend("copilot", {
               schema = {
                 model = {
-                  default = "gpt-5-mini",
+                  default = "gpt-5.4-mini",
                 },
               },
             })
