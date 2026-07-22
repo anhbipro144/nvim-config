@@ -40,6 +40,51 @@ return {
                 }, chat)
               end,
             },
+            reasoning_effort = {
+              modes = {
+                n = "gr",
+              },
+              description = "Change Codex reasoning effort",
+              callback = function(chat)
+                if not chat.acp_connection then
+                  return vim.notify(
+                    "No ACP connection available",
+                    vim.log.levels.WARN
+                  )
+                end
+
+                local options = chat.acp_connection:get_config_options()
+
+                local reasoning_option = vim.iter(options):find(function(option)
+                  local id = tostring(option.id or ""):lower()
+                  local name = tostring(option.name or ""):lower()
+
+                  return id == "thought_level"
+                      or id:find("reason", 1, true)
+                      or id:find("thought", 1, true)
+                      or name:find("reason", 1, true)
+                      or name:find("thought", 1, true)
+                end)
+
+                if not reasoning_option then
+                  return vim.notify(
+                    "Reasoning effort option not available",
+                    vim.log.levels.WARN
+                  )
+                end
+
+                local SlashCommand = require(
+                  "codecompanion.interactions.chat.slash_commands.builtin.acp_session_options"
+                )
+
+                SlashCommand
+                    .new({
+                      Chat = chat,
+                      config = {},
+                    })
+                    :show_values(reasoning_option)
+              end,
+            },
           },
           tools = {
             opts = {
