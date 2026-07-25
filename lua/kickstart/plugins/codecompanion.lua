@@ -192,14 +192,11 @@ return {
           codex = function()
             return require("codecompanion.adapters").extend("codex", {
               defaults = {
-                auth_method = "chatgpt",
+                auth_method = "chat-gpt",
                 session_config_options = {
                   model = "gpt-5.6-terra",
                   thought_level = "Medium",
                 },
-              },
-              env = {
-                OPENAI_API_KEY = "OPENAI_API_KEY",
               },
             })
           end,
