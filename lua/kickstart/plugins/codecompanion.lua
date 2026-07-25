@@ -1,7 +1,5 @@
 return {
   "olimorris/codecompanion.nvim",
-  -- tag = "v18.7.0",
-  -- pin = true,
   cmd = { "CodeCompanion" },
   keys = {
     { "`",          "<cmd>CodeCompanionChat Toggle<CR>", desc = "Open CodeCompanion chat buffer" },
