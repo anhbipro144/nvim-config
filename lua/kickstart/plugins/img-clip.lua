@@ -2,6 +2,7 @@ return {
   "HakonHarnes/img-clip.nvim",
   event = "VeryLazy",
   opts = {
+    insert_mode_after_paste = false,
     filetypes = {
       codecompanion = {
         prompt_for_file_name = false,
@@ -12,6 +13,6 @@ return {
   },
   keys = {
     -- suggested keymap
-    { "<leader>v", "<cmd>PasteImage<cr>", desc = "Paste image from system clipboard" },
+    { "<leader>v", "<cmd>PasteImage<cr>", desc = "Paste image from system clipboard", nowait = true },
   },
 }

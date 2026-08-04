@@ -2,13 +2,11 @@ return {
   "olimorris/codecompanion.nvim",
   cmd = { "CodeCompanion" },
   keys = {
-    { "`",          "<cmd>CodeCompanionChat Toggle<CR>", desc = "Open CodeCompanion chat buffer" },
-    { "<leader>ch", "<cmd>CodeCompanionHistory<CR>",     desc = "Open CodeCompanion history picker" },
+    { "`", "<cmd>CodeCompanionChat Toggle<CR>", desc = "Open CodeCompanion chat buffer" },
   },
   dependencies = {
     "nvim-lua/plenary.nvim",
     "nvim-treesitter/nvim-treesitter",
-    "ravitemer/codecompanion-history.nvim",
     "github/copilot.vim",
     "ravitemer/mcphub.nvim"
   },
@@ -18,6 +16,13 @@ return {
     local codecompanion = require("codecompanion")
 
     codecompanion.setup({
+      rules = {
+        opts = {
+          chat = {
+            autoload = false,
+          },
+        },
+      },
       interactions = {
         chat = {
           adapter = "codex",
@@ -83,6 +88,44 @@ return {
                     :show_values(reasoning_option)
               end,
             },
+            model_selection = {
+              modes = {
+                n = "gm",
+              },
+              description = "Change Codex model",
+              callback = function(chat)
+                if not chat.acp_connection then
+                  return vim.notify(
+                    "No ACP connection available",
+                    vim.log.levels.WARN
+                  )
+                end
+
+                local model_option = vim.iter(chat.acp_connection:get_config_options()):find(
+                  function(option)
+                    return tostring(option.id or ""):lower() == "model"
+                  end
+                )
+
+                if not model_option then
+                  return vim.notify(
+                    "Model selection option not available",
+                    vim.log.levels.WARN
+                  )
+                end
+
+                local SlashCommand = require(
+                  "codecompanion.interactions.chat.slash_commands.builtin.acp_session_options"
+                )
+
+                SlashCommand
+                    .new({
+                      Chat = chat,
+                      config = {},
+                    })
+                    :show_values(model_option)
+              end,
+            },
           },
           tools = {
             opts = {
@@ -125,34 +168,6 @@ return {
             make_vars = true,
             make_slash_commands = true,
             show_result_in_chat = true,
-          },
-        },
-        history = {
-          enabled = true,
-          opts = {
-            keymap = "gh",
-            save_chat_keymap = "sc",
-            auto_save = true,
-            expiration_days = 3,
-            picker = "telescope",
-            auto_generate_title = true,
-            title_generation_opts = {
-              adapter = "copilot",
-              model = "gpt-4.1",
-              refresh_every_n_prompts = 3,
-              max_refreshes = 3,
-            },
-            dir_to_save = vim.fn.stdpath("data") .. "/codecompanion-history",
-            enable_logging = false,
-            chat_filter = nil,
-            picker_keymaps = {
-              rename = {
-                i = "<C-r>",
-              },
-              delete = {
-                i = "<C-S-D>",
-              },
-            },
           },
         },
         vectorcode = {

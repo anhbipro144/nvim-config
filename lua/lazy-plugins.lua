@@ -68,8 +68,6 @@ require('lazy').setup({
 
   require 'kickstart.plugins.codecompanion',
 
-  -- require 'lua.kickstart.plugins.codecompanion-history',
-
   require 'kickstart.plugins.copilot',
 
   require 'kickstart.plugins.prisma',
