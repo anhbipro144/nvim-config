@@ -3,6 +3,7 @@ return {
   cmd = { "CodeCompanion" },
   keys = {
     { "`", "<cmd>CodeCompanionChat Toggle<CR>", desc = "Open CodeCompanion chat buffer" },
+    { "<leader>cc", "<cmd>CodeCompanionChat<CR>", desc = "Start a new CodeCompanion chat" },
   },
   dependencies = {
     "nvim-lua/plenary.nvim",
@@ -135,7 +136,6 @@ return {
                 "file_search",
                 "web_search",
                 "fetch_webpage",
-                -- "vectorcode_toolbox",
               },
               auto_submit_errors = true,
               auto_submit_success = true,
@@ -168,35 +168,6 @@ return {
             make_vars = true,
             make_slash_commands = true,
             show_result_in_chat = true,
-          },
-        },
-        vectorcode = {
-          opts = {
-            tool_group = {
-              enabled = true,
-              extras = {},
-              collapse = false,
-            },
-            tool_opts = {
-              ["*"] = {},
-              ls = {},
-              vectorise = {},
-              query = {
-                max_num = { chunk = -1, document = -1 },
-                default_num = { chunk = 50, document = 10 },
-                include_stderr = false,
-                use_lsp = true,
-                no_duplicate = true,
-                chunk_mode = true,
-                summarise = {
-                  enabled = false,
-                  adapter = nil,
-                  query_augmented = true,
-                },
-              },
-              files_ls = {},
-              files_rm = {},
-            },
           },
         },
       },
