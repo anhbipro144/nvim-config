@@ -77,35 +77,38 @@ return {
     end
 
     vim.keymap.set("n", "<leader>jy", copy_jira_issue_link, { desc = "Generate Jira issue link" })
-    vim.keymap.set("n", "<leader>jo", "<cmd>AtlasJira<CR>", { desc = "Open Atlas Jira" })
+    vim.keymap.set("n", "<leader>jo", "<cmd>AtlasIssues jira<CR>", { desc = "Open Atlas Jira" })
 
     require("atlas").setup({
       bitbucket = {}, -- See configuration below
-      jira = {
-        token = os.getenv("JIRA_API_TOKEN"),
-        email = os.getenv("JIRA_USER"),
-        base_url = "https://oneline.atlassian.net",
+      issues = {
+        providers = {
+          jira = {
+            token = os.getenv("JIRA_API_TOKEN"),
+            email = os.getenv("JIRA_USER"),
+            base_url = "https://oneline.atlassian.net",
 
-        ---@type JiraViewConfig[]
-        views = {
-          {
-            name = "My Board",
-            key = "M",
-            jql = "project = CNPRD AND assignee = currentUser() AND sprint IN openSprints() ORDER BY updated DESC",
-          },
-          {
-            name = "My all ticket",
-            key = "A",
-            jql = "project = CNPRD AND assignee = currentUser()  ORDER BY updated DESC",
-          },
-          {
-            name = "Team Board",
-            key = "T",
-            jql = "project = CNPRD ORDER BY updated DESC",
+            ---@type JiraViewConfig[]
+            views = {
+              {
+                name = "My Board",
+                key = "M",
+                jql = "project = CNPRD AND assignee = currentUser() AND sprint IN openSprints() ORDER BY updated DESC",
+              },
+              {
+                name = "My all ticket",
+                key = "A",
+                jql = "project = CNPRD AND assignee = currentUser()  ORDER BY updated DESC",
+              },
+              {
+                name = "Team Board",
+                key = "T",
+                jql = "project = CNPRD ORDER BY updated DESC",
+              },
+            },
           },
         },
-
-      }, -- See configuration below
+      },
     })
   end,
 }
