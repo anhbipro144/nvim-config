@@ -78,8 +78,6 @@ require('lazy').setup({
 
   require 'kickstart.plugins.autotag',
 
-  require 'kickstart.plugins.cursor-animate',
-
   -- require 'kickstart/plugins/blink',
 
   require 'kickstart.plugins.spider',
