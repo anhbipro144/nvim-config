@@ -36,7 +36,20 @@ return {
       group = vim.api.nvim_create_augroup("CopyWorktreeAgents", { clear = true }),
       pattern = "NeogitWorktreeCreate",
       callback = function(args)
-        agents.copy_for_worktree(args.data.new_cwd)
+        local new_cwd = args.data.new_cwd
+
+        agents.copy_for_worktree(new_cwd)
+
+        vim.system({ "codegraph", "init" }, { cwd = new_cwd }, function(result)
+          if result.code ~= 0 then
+            vim.schedule(function()
+              vim.notify(
+                "codegraph init failed:\n" .. result.stderr,
+                vim.log.levels.ERROR
+              )
+            end)
+          end
+        end)
       end,
     })
   end,
