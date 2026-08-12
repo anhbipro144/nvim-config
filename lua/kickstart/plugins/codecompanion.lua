@@ -170,7 +170,10 @@ return {
             make_tools = true,
             show_server_tools_in_chat = true,
             add_mcp_prefix_to_tool_names = false,
-            make_vars = true,
+            -- CodeCompanion no longer exposes `interactions.chat.variables`.
+            -- Keeping this enabled makes MCPHub try to register resource
+            -- variables against a nil table during every startup.
+            make_vars = false,
             make_slash_commands = true,
             show_result_in_chat = true,
           },
