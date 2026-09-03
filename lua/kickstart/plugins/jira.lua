@@ -77,7 +77,7 @@ return {
     end
 
     vim.keymap.set("n", "<leader>jy", copy_jira_issue_link, { desc = "Generate Jira issue link" })
-    vim.keymap.set("n", "<leader>jo", "<cmd>AtlasIssues jira<CR>", { desc = "Open Atlas Jira" })
+    vim.keymap.set("n", "<leader>jo", "<cmd>Atlas Issues jira<CR>", { desc = "Open Atlas Jira" })
 
     require("atlas").setup({
       bitbucket = {}, -- See configuration below
