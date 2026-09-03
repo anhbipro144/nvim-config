@@ -2,8 +2,8 @@ return {
   "kopecmaciej/vi-sql.nvim",
   config = function()
     require("vi-sql").setup({
-      -- Press this inside vi-sql to hide the window (change to taste)
-      hide_key = "<C-q>",
+      -- `<leader>sq` opens vi-sql; the same shortcut hides it from inside vi-sql.
+      hide_key = "<leader>sq",
     })
   end,
   cmd = { "ViSQL", "ViSQLJump" },

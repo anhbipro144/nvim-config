@@ -12,7 +12,6 @@ end
 local nmap = bind('n') -- nnoremap
 local imap = bind('i') -- inoremap
 local vmap = bind('v') -- vnoremap
-local tmap = bind('t') -- tnoremap
 
 -- Set leader key
 vim.g.mapleader = ' '
@@ -29,7 +28,7 @@ nmap('<leader>N', vim.diagnostic.goto_prev, true)
 
 -- Make working with terminal windows easier
 local exit_term = '<c-\\><c-n>'
-tmap('<esc>', exit_term, true)
+-- tmap('<esc>', exit_term, true)
 -- tmap('<c-h>', exit_term..':wincmd h<cr>', true)
 -- tmap('<c-j>', exit_term..':wincmd j<cr>', true)
 -- tmap('<c-k>', exit_term..':wincmd k<cr>', true)
