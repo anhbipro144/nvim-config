@@ -122,6 +122,8 @@ require('lazy').setup({
 
   -- require 'kickstart.plugins.snacks',
 
+  require 'kickstart.plugins.nvim-mcp',
+
   require 'kickstart.plugins.mcphub',
 
   require 'kickstart.plugins.dressing',
