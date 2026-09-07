@@ -10,6 +10,7 @@ return {
       end
 
       agents.copy_for_worktree(metadata.path)
+      agents.copy_frontend_env_for_worktree(metadata.path)
     end)
   end,
 }

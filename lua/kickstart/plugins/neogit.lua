@@ -39,6 +39,7 @@ return {
         local new_cwd = args.data.new_cwd
 
         agents.copy_for_worktree(new_cwd)
+        agents.copy_frontend_env_for_worktree(new_cwd)
 
         vim.system({ "codegraph", "init" }, { cwd = new_cwd }, function(result)
           if result.code ~= 0 then

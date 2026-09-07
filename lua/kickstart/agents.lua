@@ -5,6 +5,8 @@ local agents_by_git_common_dir = {
   ["/home/neo/personal/work/NPRD/be-bare"] = "/home/neo/.codex/agents/nprd-backend.md",
 }
 
+local frontend_git_common_dir = "/home/neo/personal/work/NPRD/fe-bare"
+
 ---@param worktree_path string
 ---@return string|nil
 local function get_git_common_dir(worktree_path)
@@ -51,6 +53,37 @@ function M.copy_for_worktree(worktree_path)
 
   if not copied then
     vim.notify(string.format("Failed to copy AGENTS.md: %s", err), vim.log.levels.ERROR)
+  end
+end
+
+---@param worktree_path string
+function M.copy_frontend_env_for_worktree(worktree_path)
+  local git_common_dir = get_git_common_dir(worktree_path)
+
+  if git_common_dir ~= frontend_git_common_dir then
+    return
+  end
+
+  local normalized_worktree_path = vim.fs.normalize(worktree_path)
+  local source = vim.fs.joinpath(normalized_worktree_path, ".env.development")
+  local destination = vim.fs.joinpath(normalized_worktree_path, ".env.local")
+
+  if vim.uv.fs_stat(destination) then
+    return
+  end
+
+  if not vim.uv.fs_stat(source) then
+    vim.notify(
+      string.format("No .env.development file found in frontend worktree: %s", source),
+      vim.log.levels.WARN
+    )
+    return
+  end
+
+  local copied, err = vim.uv.fs_copyfile(source, destination)
+
+  if not copied then
+    vim.notify(string.format("Failed to copy .env.local: %s", err), vim.log.levels.ERROR)
   end
 end
 
