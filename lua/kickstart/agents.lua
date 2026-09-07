@@ -65,8 +65,8 @@ function M.copy_frontend_env_for_worktree(worktree_path)
   end
 
   local normalized_worktree_path = vim.fs.normalize(worktree_path)
-  local source = vim.fs.joinpath(normalized_worktree_path, ".env.development")
-  local destination = vim.fs.joinpath(normalized_worktree_path, ".env.local")
+  local source = vim.fs.joinpath(normalized_worktree_path, "env", ".env.development")
+  local destination = vim.fs.joinpath(normalized_worktree_path, "env", ".env.local")
 
   if vim.uv.fs_stat(destination) then
     return
@@ -74,7 +74,7 @@ function M.copy_frontend_env_for_worktree(worktree_path)
 
   if not vim.uv.fs_stat(source) then
     vim.notify(
-      string.format("No .env.development file found in frontend worktree: %s", source),
+      string.format("No env/.env.development file found in frontend worktree: %s", source),
       vim.log.levels.WARN
     )
     return
@@ -83,7 +83,7 @@ function M.copy_frontend_env_for_worktree(worktree_path)
   local copied, err = vim.uv.fs_copyfile(source, destination)
 
   if not copied then
-    vim.notify(string.format("Failed to copy .env.local: %s", err), vim.log.levels.ERROR)
+    vim.notify(string.format("Failed to copy env/.env.local: %s", err), vim.log.levels.ERROR)
   end
 end
 
