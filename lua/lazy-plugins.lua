@@ -68,8 +68,6 @@ require('lazy').setup({
 
   require 'kickstart.plugins.codecompanion',
 
-  require 'kickstart.plugins.copilot',
-
   require 'kickstart.plugins.prisma',
 
   require 'kickstart.plugins.lsp',
@@ -136,7 +134,8 @@ require('lazy').setup({
 
   -- require 'kickstart.plugins.sonarqube-connect',
 
-  require 'kickstart.plugins.sonarqube',
+  -- Temporarily disabled to reduce language-server memory use.
+  -- require 'kickstart.plugins.sonarqube',
 
   require 'kickstart.plugins.template-string',
 

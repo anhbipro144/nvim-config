@@ -8,7 +8,6 @@ return {
   dependencies = {
     "nvim-lua/plenary.nvim",
     "nvim-treesitter/nvim-treesitter",
-    "github/copilot.vim",
     "ravitemer/mcphub.nvim"
   },
 
@@ -221,16 +220,6 @@ return {
                   default = function()
                     return "grok-3-mini"
                   end,
-                },
-              },
-            })
-          end,
-
-          copilot = function()
-            return require("codecompanion.adapters").extend("copilot", {
-              schema = {
-                model = {
-                  default = "gpt-5.4-mini",
                 },
               },
             })

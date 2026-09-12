@@ -145,8 +145,15 @@ return {
 
     require("mason").setup()
     require("mason-lspconfig").setup({
+      automatic_enable = {
+        exclude = { "copilot" },
+      },
       handlers = {
         function(server_name)
+          -- Temporarily disabled: it can retain over 1 GiB for this repository.
+          if server_name == "eslint" or server_name == "copilot" then
+            return
+          end
           local server = servers[server_name] or {}
           server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
           vim.lsp.config(server_name, server)
@@ -157,7 +164,7 @@ return {
     require("mason-tool-installer").setup({
       ensure_installed = {
         --linter
-        "eslint-lsp",
+        -- "eslint-lsp", -- temporarily disabled to reduce language-server memory use
 
         --formatter
         "clang-format",
