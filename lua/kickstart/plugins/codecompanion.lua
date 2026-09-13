@@ -256,5 +256,7 @@ return {
         },
       },
     })
+
+    require("codecompanion.tabs").setup()
   end,
 }
