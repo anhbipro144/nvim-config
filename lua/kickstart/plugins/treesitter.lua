@@ -9,7 +9,7 @@ return {
       treesitter.setup {
         install_dir = vim.fn.stdpath('data') .. '/site',
       }
-      treesitter.install { 'lua', 'vim', 'vimdoc', 'markdown', 'markdown_inline', 'python', 'typescript', 'javascript', 'cpp' }
+      treesitter.install { 'lua', 'vim', 'vimdoc', 'markdown', 'markdown_inline', 'python', 'typescript', 'tsx', 'javascript', 'cpp' }
 
       local group = vim.api.nvim_create_augroup('kickstart-treesitter', { clear = true })
       vim.api.nvim_create_autocmd('FileType', {
