@@ -54,6 +54,8 @@ require('lazy').setup({
 
   require 'kickstart.plugins.toggleterm',
 
+  require 'kickstart.plugins.overseer',
+
   require 'kickstart.plugins.git-worktree',
 
   require 'kickstart.plugins.git-pipelines',
