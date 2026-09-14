@@ -11,7 +11,7 @@ return {
     overseer.setup(opts)
 
     overseer.register_template {
-      name = 'NPRD BFF (local)',
+      name = 'BFF (local)',
       desc = 'Run the NPRD BFF with its local environment',
       builder = function()
         return {
@@ -23,7 +23,7 @@ return {
     }
 
     overseer.register_template {
-      name = 'NPRD Backend (local)',
+      name = 'Backend (local)',
       desc = 'Run the NPRD gRPC backend with its local environment',
       builder = function()
         return {
