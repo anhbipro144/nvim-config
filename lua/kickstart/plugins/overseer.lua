@@ -37,5 +37,37 @@ return {
         }
       end,
     }
+
+    overseer.register_template {
+      name = 'Cloud SQL Proxy (dev)',
+      desc = 'Run the development Cloud SQL Proxy on port 5435',
+      builder = function()
+        return {
+          cmd = {
+            '/home/neo/personal/work/cloud-sql-proxy',
+            'one-global-mtfaber-test:asia-southeast1:sea1-dev-nprd-db',
+            '--port',
+            '5435',
+          },
+          components = { 'default' },
+        }
+      end,
+    }
+
+    overseer.register_template {
+      name = 'AlloyDB Auth Proxy (UAT)',
+      desc = 'Run the UAT AlloyDB Auth Proxy on port 5000',
+      builder = function()
+        return {
+          cmd = {
+            '/home/neo/.nix-profile/bin/alloydb-auth-proxy',
+            'projects/one-global-ods-uat/locations/asia-southeast1/clusters/sea1-uat-ods-db-cluster/instances/sea1-uat-ods-db-primary?port=5000',
+            '--public-ip',
+            '--auto-iam-authn',
+          },
+          components = { 'default' },
+        }
+      end,
+    }
   end,
 }
