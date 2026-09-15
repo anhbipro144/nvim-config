@@ -95,7 +95,7 @@ return {
             },
             model_selection = {
               modes = {
-                n = "gm",
+                n = "gn",
               },
               description = "Change Codex model",
               callback = function(chat)
