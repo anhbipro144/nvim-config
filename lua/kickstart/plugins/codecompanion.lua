@@ -8,11 +8,11 @@ return {
   dependencies = {
     "nvim-lua/plenary.nvim",
     "nvim-treesitter/nvim-treesitter",
-    "ravitemer/mcphub.nvim"
+    "ravitemer/mcphub.nvim",
+    "lalitmee/codecompanion-spinners.nvim",
   },
 
   config = function()
-    require("codecompanion.spinner"):init()
     local codecompanion = require("codecompanion")
 
     codecompanion.setup({
@@ -163,6 +163,11 @@ return {
         },
       },
       extensions = {
+        spinner = {
+          opts = {
+            style = "native",
+          },
+        },
         mcphub = {
           callback = "mcphub.extensions.codecompanion",
           opts = {
