@@ -175,7 +175,7 @@ return {
               defaults = {
                 auth_method = "chat-gpt",
                 session_config_options = {
-                  model = "gpt-5.6-terra",
+                  model = "gpt-5.6-luna",
                   thought_level = "Medium",
                 },
               },
