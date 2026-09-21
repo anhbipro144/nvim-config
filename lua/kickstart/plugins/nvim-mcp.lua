@@ -13,7 +13,7 @@ end
 
 return {
   "linw1995/nvim-mcp",
-  lazy = false,
+  cond = function() return vim.env.NVIM_ENABLE_MCP == "1" end,
   config = function()
     if not is_git_transient_editor() then
       require("nvim-mcp").setup({})
