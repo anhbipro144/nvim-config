@@ -124,8 +124,6 @@ require('lazy').setup({
 
   require 'kickstart.plugins.nvim-mcp',
 
-  require 'kickstart.plugins.mcphub',
-
   require 'kickstart.plugins.dressing',
 
   require 'kickstart.plugins.jira',

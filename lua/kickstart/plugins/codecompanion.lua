@@ -8,7 +8,6 @@ return {
   dependencies = {
     "nvim-lua/plenary.nvim",
     "nvim-treesitter/nvim-treesitter",
-    "ravitemer/mcphub.nvim",
     "lalitmee/codecompanion-spinners.nvim",
   },
 
@@ -166,20 +165,6 @@ return {
         spinner = {
           opts = {
             style = "native",
-          },
-        },
-        mcphub = {
-          callback = "mcphub.extensions.codecompanion",
-          opts = {
-            make_tools = true,
-            show_server_tools_in_chat = true,
-            add_mcp_prefix_to_tool_names = false,
-            -- CodeCompanion no longer exposes `interactions.chat.variables`.
-            -- Keeping this enabled makes MCPHub try to register resource
-            -- variables against a nil table during every startup.
-            make_vars = false,
-            make_slash_commands = true,
-            show_result_in_chat = true,
           },
         },
       },
