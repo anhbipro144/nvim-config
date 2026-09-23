@@ -25,7 +25,8 @@ return {
     local manual_servers = {
       clangd = {
         cmd          = {
-          "clangd",
+          "/bin/bash",
+          "/home/neo/.nix-profile/bin/clangd",
           "--background-index",
         },
         init_options = {
