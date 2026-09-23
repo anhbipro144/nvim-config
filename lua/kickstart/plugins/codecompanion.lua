@@ -162,6 +162,10 @@ return {
         },
       },
       extensions = {
+        codex_sessions = {
+          enabled = true,
+          opts = { keymap = "gC" },
+        },
         spinner = {
           opts = {
             style = "native",
@@ -175,7 +179,7 @@ return {
               defaults = {
                 auth_method = "chat-gpt",
                 session_config_options = {
-                  model = "gpt-5.6-luna",
+                  model = "gpt-6-luna",
                   thought_level = "Medium",
                 },
               },
