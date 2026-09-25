@@ -25,11 +25,6 @@ return {
       interactions = {
         chat = {
           adapter = "codex",
-          slash_commands = {
-            ["resume"] = {
-              path = "codecompanion.resume",
-            },
-          },
           keymaps = {
             acp_session_options = {
               modes = {
