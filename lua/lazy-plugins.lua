@@ -120,7 +120,7 @@ require('lazy').setup({
 
   require 'kickstart.plugins.octo',
 
-  -- require 'kickstart.plugins.snacks',
+  require 'kickstart.plugins.snacks',
 
   require 'kickstart.plugins.nvim-mcp',
 
