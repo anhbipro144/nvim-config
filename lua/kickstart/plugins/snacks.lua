@@ -35,7 +35,22 @@ return {
   opts = {
     gh = { enabled = true },
     lazygit = { enabled = true },
-    picker = { enabled = true },
+    picker = {
+      enabled = true,
+      sources = {
+        select = {
+          kinds = {
+            ['codecompanion.nvim'] = {
+              win = {
+                input = {
+                  keys = { ['<Esc>'] = { 'close', mode = { 'n', 'i' } } },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
 
     bigfile = { enabled = false },
     scratch = { enabled = false },
