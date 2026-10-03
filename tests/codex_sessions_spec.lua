@@ -553,4 +553,94 @@ test("CodeCompanion /delete releases its writer before deleting", function()
   assert(ok, err)
 end)
 
+test("CodeCompanion /delete keeps a remaining chat visible without creating a replacement", function()
+  local extension = require("codecompanion._extensions.codex_sessions")
+  local tabs = require("codecompanion.tabs")
+  local old_codecompanion, old_sessions = package.loaded["codecompanion"], package.loaded["codex_sessions"]
+  local old_select, old_notify, old_defer = vim.ui.select, vim.notify, vim.defer_fn
+  local chats, buffers = {}, {}
+  local choice, pending_delete, respond, notice
+  local function create_chat(title)
+    local bufnr = vim.api.nvim_create_buf(false, true)
+    buffers[#buffers + 1] = bufnr
+    vim.b[bufnr].codecompanion_tab_chat = true
+    vim.b[bufnr].codecompanion_tab_title = title
+    local chat = {
+      bufnr = bufnr,
+      adapter = { name = "codex" },
+      acp_connection = { session_id = title },
+      ui = { is_visible = function() return vim.fn.bufwinid(bufnr) ~= -1 end },
+      close = function()
+        chats[bufnr] = nil
+        vim.api.nvim_buf_delete(bufnr, { force = true })
+      end,
+    }
+    chats[bufnr] = chat
+    return chat
+  end
+  package.loaded["codecompanion"] = {
+    buf_get_chat = function(bufnr)
+      return chats[bufnr == 0 and vim.api.nvim_get_current_buf() or bufnr]
+    end,
+    restore = function(bufnr)
+      assert(chats[bufnr], "restore must target a live existing chat")
+      vim.api.nvim_open_win(bufnr, true, { relative = "editor", width = 40, height = 10, row = 1, col = 1 })
+    end,
+    chat = function() error("deletion must not create a blank chat") end,
+  }
+  package.loaded["codex_sessions"] = {
+    get = function(id, callback) callback({ id = id, name = id }) end,
+    delete = function(id, callback)
+      for _, chat in pairs(chats) do
+        assert(chat.acp_connection.session_id ~= id, "owning chat must close before deletion")
+      end
+      respond = callback
+    end,
+  }
+  vim.ui.select = function(_, _, callback) choice = callback end
+  vim.notify = function(message) notice = message end
+  vim.defer_fn = function(callback, delay) assert(delay == 250); pending_delete = callback end
+
+  local ok, err = pcall(function()
+    local first = create_chat("test")
+    local middle = create_chat("who is zeff bezos?")
+    local last = create_chat("third")
+    package.loaded["codecompanion"].restore(middle.bufnr)
+    extension.delete_current(middle)
+    choice("Cancel")
+    assert(vim.api.nvim_get_current_buf() == middle.bufnr and pending_delete == nil)
+
+    extension.delete_current(middle)
+    choice("Delete permanently")
+    assert(not vim.api.nvim_buf_is_valid(middle.bufnr))
+    assert(vim.api.nvim_get_current_buf() == last.bufnr and last.ui:is_visible())
+    assert(not tabs.render_winbar():find("who is zeff bezos?", 1, true))
+    pending_delete()
+    respond(nil, { message = "deletion rejected by server" })
+    assert(notice:find("deletion rejected by server", 1, true))
+    assert(vim.api.nvim_get_current_buf() == last.bufnr, "failure must not close the remaining chat")
+
+    extension.delete_current(last)
+    choice("Delete permanently")
+    assert(vim.api.nvim_get_current_buf() == first.bufnr and first.ui:is_visible())
+    pending_delete()
+    respond({}, nil)
+    assert(notice:find("session deleted", 1, true))
+    assert(not tabs.render_winbar():find("third", 1, true))
+
+    extension.delete_current(first)
+    choice("Delete permanently")
+    assert(not vim.api.nvim_buf_is_valid(first.bufnr) and next(chats) == nil)
+    pending_delete()
+    respond({}, nil)
+    assert(tabs.render_winbar() == "%#TabLineFill#")
+  end)
+  package.loaded["codecompanion"], package.loaded["codex_sessions"] = old_codecompanion, old_sessions
+  vim.ui.select, vim.notify, vim.defer_fn = old_select, old_notify, old_defer
+  for _, bufnr in ipairs(buffers) do
+    if vim.api.nvim_buf_is_valid(bufnr) then vim.api.nvim_buf_delete(bufnr, { force = true }) end
+  end
+  assert(ok, err)
+end)
+
 print("codex_sessions tests: ok")

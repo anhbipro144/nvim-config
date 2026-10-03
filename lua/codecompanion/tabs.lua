@@ -114,6 +114,33 @@ function M.open_chat(bufnr)
   codecompanion.restore(bufnr)
 end
 
+function M.close_chat(chat)
+  local visible = chat.ui and chat.ui:is_visible()
+  local next_chat, previous_chat
+  if visible then
+    local codecompanion = require("codecompanion")
+    for _, bufnr in ipairs(chat_buffers()) do
+      if bufnr ~= chat.bufnr and codecompanion.buf_get_chat(bufnr) then
+        if bufnr > chat.bufnr then
+          next_chat = bufnr
+          break
+        end
+        previous_chat = bufnr
+      end
+    end
+  end
+  next_chat = next_chat or previous_chat
+
+  chat:close()
+  if visible and next_chat then
+    local opened, err = pcall(M.open_chat, next_chat)
+    if not opened then
+      vim.notify("Could not open remaining CodeCompanion chat: " .. tostring(err), vim.log.levels.WARN)
+    end
+  end
+  redraw()
+end
+
 function M.click_chat(bufnr, _, button)
   if button == "l" then
     M.open_chat(bufnr)

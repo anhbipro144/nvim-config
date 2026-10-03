@@ -129,7 +129,7 @@ function Extension.delete_current(chat)
       if not vim.api.nvim_buf_is_valid(chat.bufnr) or connection.session_id ~= id or chat.current_request then
         return notify("chat session changed or is busy; deletion cancelled")
       end
-      local closed, close_err = pcall(chat.close, chat)
+      local closed, close_err = pcall(require("codecompanion.tabs").close_chat, chat)
       if not closed then return notify("could not close chat; deletion cancelled: " .. tostring(close_err)) end
 
       local attempts = 0
