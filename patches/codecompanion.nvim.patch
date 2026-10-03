@@ -265,3 +265,247 @@ index 3577c711..9b56ce24 100644
  end
  
  return M
+diff --git a/lua/codecompanion/interactions/code_review/checklist.lua b/lua/codecompanion/interactions/code_review/checklist.lua
+index fa16b0d0..8fa09ddd 100644
+--- a/lua/codecompanion/interactions/code_review/checklist.lua
++++ b/lua/codecompanion/interactions/code_review/checklist.lua
+@@ -16,7 +16,8 @@ local M = {}
+ ---@class CodeCompanion.CodeReview.Entry
+ ---@field hunks? number[] Indexes into the file's diff hunks, neighbours grouped into one row
+ ---@field ids? string[] The baseline hunks this one covers, which is what accepting records
+----@field kind "header"|"file"|"hunk"
++---@field kind "header"|"repository"|"file"|"hunk"
++---@field repository? string Repository path relative to the workspace, on group headings
+ ---@field path? string Absent on the header row
+ ---@field sent? string[] Comments sent last round against these lines, so the response can be read against the ask
+ ---@field spans? table<string, number[]> Byte ranges to highlight, keyed by what they show: `path`, `added`, `removed`, `errors`, `warnings`
+@@ -468,6 +469,65 @@ local function sort_by_risk(opts)
+   return opts.paths
+ end
+ 
++---@param opts { root: string, entries: CodeCompanion.CodeReview.Entry[], lines: string[], diffs: table<string, CC.Diff> }
++---@return table[]
++local function collect_repositories(opts)
++  local groups, by_repository, group = {}, {}, nil
++  for row, entry in ipairs(opts.entries) do
++    if entry.kind == "file" then
++      local root = vim.fs.root(vim.fs.joinpath(opts.root, entry.path), ".git") or opts.root
++      local name = root == opts.root and "." or vim.fs.relpath(opts.root, root)
++      name = name or "."
++      group = by_repository[name]
++      if not group then
++        group = { name = name, rows = {}, files = 0, added = 0, removed = 0 }
++        by_repository[name] = group
++        table.insert(groups, group)
++      end
++      group.files = group.files + 1
++      for _, hunk in ipairs(opts.diffs[entry.path].hunks) do
++        group.added = group.added + hunk.to_count
++        group.removed = group.removed + hunk.from_count
++      end
++    end
++    table.insert(group.rows, { entry = entry, text = opts.lines[row] })
++  end
++  return groups
++end
++
++---@param opts { root: string, entries: CodeCompanion.CodeReview.Entry[], lines: string[], diffs: table<string, CC.Diff> }
++---@return CodeCompanion.CodeReview.Entry[], string[]
++local function group_repositories(opts)
++  local groups = collect_repositories(opts)
++  if #groups == 1 and groups[1].name == "." then
++    return opts.entries, opts.lines
++  end
++  local entries, lines = {}, {}
++  for _, group in ipairs(groups) do
++    local name = group.name == "." and "Workspace" or group.name
++    local label = fmt("%s  %s", name, pluralise(group.files, "file"))
++    local added, removed = fmt("+%d", group.added), fmt("-%d", group.removed)
++    table.insert(entries, {
++      kind = "repository",
++      repository = group.name,
++      spans = {
++        path = { 0, #name },
++        added = { #label + 2, #label + 2 + #added },
++        removed = { #label + 3 + #added, #label + 3 + #added + #removed },
++      },
++    })
++    table.insert(lines, label .. "  " .. added .. " " .. removed)
++    for _, row in ipairs(group.rows) do
++      for _, span in pairs(row.entry.spans or {}) do
++        span[1], span[2] = span[1] + 2, span[2] + 2
++      end
++      table.insert(entries, row.entry)
++      table.insert(lines, "  " .. row.text)
++    end
++  end
++  return entries, lines
++end
++
+ ---Build the checklist rows, the entry each row selects and the diff behind each file
+ ---@param opts { root: string }
+ ---@return { entries: CodeCompanion.CodeReview.Entry[], lines: string[], diffs: table<string, CC.Diff> }|nil
+@@ -534,6 +594,7 @@ function M.build(opts)
+     end
+   end
+ 
++  entries, lines = group_repositories({ root = root, entries = entries, lines = lines, diffs = diffs })
+   local header = summarise_round({
+     paths = paths,
+     diffs = diffs,
+diff --git a/lua/codecompanion/interactions/code_review/window.lua b/lua/codecompanion/interactions/code_review/window.lua
+index f7001b82..721e4cde 100644
+--- a/lua/codecompanion/interactions/code_review/window.lua
++++ b/lua/codecompanion/interactions/code_review/window.lua
+@@ -57,6 +57,16 @@ local review ---@type CodeCompanion.CodeReview.Window
+ 
+ local M = {}
+ 
++---Keep repository headings visible when their files are folded
++---@return string
++function M.checklist_foldexpr()
++  local entry = review and review.entries[vim.v.lnum]
++  if not entry or not review.entries[2] or review.entries[2].kind ~= "repository" or entry.kind == "header" then
++    return "0"
++  end
++  return entry.kind == "repository" and ">1" or "1"
++end
++
+ ---@return boolean
+ local function is_open()
+   return review ~= nil and api.nvim_buf_is_valid(review.checklist.bufnr) and api.nvim_buf_is_valid(review.pane.bufnr)
+@@ -132,6 +142,14 @@ local function open_panels(lines)
+   -- A new window inherits the global gutter options, so every one of them is pinned here
+   vim.wo[checklist_winnr].cursorline = true
+   vim.wo[checklist_winnr].foldcolumn = "0"
++  vim.wo[checklist_winnr].foldmethod = "expr"
++  vim.wo[checklist_winnr].foldexpr = "v:lua.require'codecompanion.interactions.code_review.window'.checklist_foldexpr()"
++  vim.wo[checklist_winnr].foldtext = "getline(v:foldstart)"
++  vim.wo[checklist_winnr].foldlevel = 99
++  vim.wo[checklist_winnr].foldenable = true
++  api.nvim_win_call(checklist_winnr, function()
++    vim.opt_local.fillchars:append({ foldopen = "▾", foldclose = "▸", foldsep = " " })
++  end)
+   vim.wo[checklist_winnr].number = false
+   vim.wo[checklist_winnr].relativenumber = false
+   vim.wo[checklist_winnr].signcolumn = "no"
+@@ -156,6 +174,7 @@ end
+ ---Colour the path, counts and diagnostics on every checklist row
+ ---@return nil
+ local function highlight_checklist()
++  vim.wo[review.checklist.winnr].foldcolumn = review.entries[2] and review.entries[2].kind == "repository" and "1" or "0"
+   api.nvim_buf_clear_namespace(review.checklist.bufnr, CONSTANTS.NAMESPACE, 0, -1)
+ 
+   for row, entry in ipairs(review.entries) do
+@@ -265,6 +284,9 @@ end
+ ---@return nil
+ local function select_entry(row)
+   local entry = review.entries[row]
++  if entry and entry.kind == "repository" then
++    entry = review.entries[row + 1]
++  end
+   if not entry or not entry.path then
+     return
+   end
+@@ -299,6 +321,31 @@ local function sync_panels(handler)
+   review.syncing = false
+ end
+ 
++---@return table<string, boolean>
++local function closed_repositories()
++  return api.nvim_win_call(review.checklist.winnr, function()
++    local closed = {}
++    for row, entry in ipairs(review.entries) do
++      if entry.kind == "repository" and vim.fn.foldclosed(row) == row then
++        closed[entry.repository] = true
++      end
++    end
++    return closed
++  end)
++end
++
++---@param closed table<string, boolean>
++local function refresh_folds(closed)
++  api.nvim_win_call(review.checklist.winnr, function()
++    vim.cmd("normal! zx")
++    for row, entry in ipairs(review.entries) do
++      if entry.kind == "repository" and closed[entry.repository] then
++        vim.cmd(row .. "foldclose")
++      end
++    end
++  end)
++end
++
+ ---Redraw the checklist and the file alongside it, keeping the cursor where it was
+ ---@return nil
+ local function rebuild()
+@@ -311,6 +358,7 @@ local function rebuild()
+   end
+ 
+   local row = api.nvim_win_get_cursor(review.checklist.winnr)[1]
++  local closed = closed_repositories()
+ 
+   checklist.discard(review.diffs)
+   review.active_path = nil
+@@ -319,6 +367,7 @@ local function rebuild()
+ 
+   replace_lines(review.checklist, #built.lines > 0 and built.lines or { CONSTANTS.EMPTY })
+   highlight_checklist()
++  refresh_folds(closed)
+ 
+   if #built.entries == 0 then
+     review.active_path = nil
+@@ -705,6 +754,22 @@ local ACTIONS = {
+   undo = undo_last,
+ }
+ 
++---@return nil
++local function toggle_repository()
++  if not review.entries[2] or review.entries[2].kind ~= "repository" then
++    return
++  end
++  local row = api.nvim_win_get_cursor(review.checklist.winnr)[1]
++  while row > 1 and review.entries[row].kind ~= "repository" do
++    row = row - 1
++  end
++  if review.entries[row].kind ~= "repository" then
++    return
++  end
++  api.nvim_win_set_cursor(review.checklist.winnr, { row, 0 })
++  vim.cmd("normal! za")
++end
++
+ ---@return nil
+ local function set_keymaps()
+   for _, map in pairs(config.interactions.code_review.keymaps or {}) do
+@@ -723,6 +788,15 @@ local function set_keymaps()
+       end
+     end
+   end
++  if review.entries[2] and review.entries[2].kind == "repository" then
++    for _, key in ipairs({ "<CR>", "<Tab>" }) do
++      vim.keymap.set("n", key, toggle_repository, {
++        buffer = review.checklist.bufnr,
++        desc = "Toggle the current submodule group",
++        nowait = true,
++      })
++    end
++  end
+ end
+ 
+ ---@return nil
+@@ -845,10 +919,12 @@ function M.open()
+   highlight_checklist()
+   set_keymaps()
+   setup_sync()
++  refresh_folds({})
+ 
+   sync_panels(function()
+-    pcall(api.nvim_win_set_cursor, review.checklist.winnr, { 2, 0 })
+-    select_entry(2)
++    local row = review.entries[2] and review.entries[2].kind == "repository" and 3 or 2
++    pcall(api.nvim_win_set_cursor, review.checklist.winnr, { row, 0 })
++    select_entry(row)
+   end)
+   api.nvim_set_current_win(review.checklist.winnr)
+ end
