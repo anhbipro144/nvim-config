@@ -26,6 +26,13 @@ return {
         chat = {
           adapter = "codex",
           keymaps = {
+            codex_followup = {
+              modes = { n = "gF" },
+              description = "Steer active Codex turn",
+              callback = function(chat)
+                require("codecompanion.codex_followup").open(chat)
+              end,
+            },
             acp_session_options = {
               modes = {
                 n = "go",
