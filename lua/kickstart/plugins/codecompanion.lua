@@ -4,6 +4,7 @@ return {
   keys = {
     { "`", "<cmd>CodeCompanionChat Toggle<CR>", desc = "Open CodeCompanion chat buffer" },
     { "<leader>cc", "<cmd>CodeCompanionChat<CR>", desc = "Start a new CodeCompanion chat" },
+    { "<leader>cv", "<cmd>CodeCompanionCodeReview<CR>", desc = "Open CodeCompanion code review" },
   },
   dependencies = {
     "nvim-lua/plenary.nvim",
@@ -23,6 +24,15 @@ return {
         },
       },
       interactions = {
+        code_review = {
+          keymaps = {
+            close = {
+              modes = { n = { "q", "<Esc>" } },
+              callback = "close",
+              description = "Close the code review tab",
+            },
+          },
+        },
         chat = {
           adapter = "codex",
           keymaps = {
