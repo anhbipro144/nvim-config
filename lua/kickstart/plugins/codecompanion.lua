@@ -29,7 +29,7 @@ return {
       },
       interactions = {
         code_review = {
-          opts = { agent_only = true },
+          opts = { agent_only = true, preview_delay = 60 },
           keymaps = {
             close = {
               modes = { n = { "q", "<Esc>" } },
