@@ -3,6 +3,7 @@ local M = {}
 local chat_filetype = "codecompanion"
 local chat_marker = "codecompanion_tab_chat"
 local title_key = "codecompanion_tab_title"
+local synced_title_key = "codecompanion_tab_synced_title"
 local max_title_length = 35
 
 local function is_valid_buffer(bufnr)
@@ -67,6 +68,22 @@ end
 
 local function redraw()
   vim.cmd("redrawstatus")
+end
+
+local function sync_chat_title(bufnr)
+  if not M.is_chat_buffer(bufnr) then
+    return
+  end
+
+  local chat = require("codecompanion").buf_get_chat(bufnr)
+  local title = chat and chat.title
+  if type(title) ~= "string" or vim.trim(title) == "" or vim.b[bufnr][synced_title_key] == title then
+    return
+  end
+
+  vim.b[bufnr][synced_title_key] = title
+  vim.b[bufnr][title_key] = title
+  redraw()
 end
 
 local function shortened_title(bufnr)
@@ -195,8 +212,26 @@ function M.setup()
         return
       end
 
+      sync_chat_title(bufnr)
       setup_winbar(bufnr)
       redraw()
+    end,
+  })
+
+  -- ACP session_info_update calls chat:set_title(), which renames the buffer.
+  vim.api.nvim_create_autocmd("BufFilePost", {
+    group = group,
+    callback = function(args)
+      sync_chat_title(args.buf)
+    end,
+  })
+
+  -- Duplicate buffer names can make set_title's buffer rename fail.
+  vim.api.nvim_create_autocmd("User", {
+    group = group,
+    pattern = "CodeCompanionChatDone",
+    callback = function(args)
+      sync_chat_title(args.data and args.data.bufnr)
     end,
   })
 
@@ -204,6 +239,7 @@ function M.setup()
     if M.is_chat_buffer(bufnr) then
       vim.b[bufnr][chat_marker] = true
       assign_default_title(bufnr)
+      sync_chat_title(bufnr)
       setup_winbar(bufnr)
     end
   end
