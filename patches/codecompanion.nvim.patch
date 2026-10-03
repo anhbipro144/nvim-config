@@ -1,0 +1,267 @@
+diff --git a/lua/codecompanion/interactions/code_review/baseline.lua b/lua/codecompanion/interactions/code_review/baseline.lua
+index 3577c711..9b56ce24 100644
+--- a/lua/codecompanion/interactions/code_review/baseline.lua
++++ b/lua/codecompanion/interactions/code_review/baseline.lua
+@@ -126,6 +126,62 @@ local function aborted(result)
+   return result == nil or (result.stderr or ""):find("fatal:", 1, true) ~= nil
+ end
+ 
++---@param opts { root: string, ref: string }
++---@return table<string, string>|nil
++local function get_submodules(opts)
++  local output = git(opts.root, { "ls-tree", "-rz", opts.ref })
++  if not output then
++    return nil
++  end
++  local submodules = {}
++  for entry in output:gmatch("[^%z]+") do
++    local commit, path = entry:match("^160000 commit (%x+)\t(.+)$")
++    if path then
++      submodules[path] = commit
++    end
++  end
++  return submodules
++end
++
++---@param root string
++---@return boolean
++local function is_initialized(root)
++  local stat = vim.uv.fs_lstat(root)
++  return stat ~= nil and stat.type == "directory" and vim.uv.fs_stat(vim.fs.joinpath(root, ".git")) ~= nil
++end
++
++local write_worktree
++
++---@param opts { root: string, index: string, tree: string }
++---@return boolean
++local function snapshot_submodules(opts)
++  local submodules = get_submodules({ root = opts.root, ref = opts.tree })
++  if not submodules then
++    return false
++  end
++  for path in pairs(submodules) do
++    local root = vim.fs.joinpath(opts.root, path)
++    if is_initialized(root) then
++      local tree = write_worktree(root)
++      -- Stable timestamps keep unchanged submodule snapshots identical between comparisons.
++      local identity = vim.tbl_extend("force", CONSTANTS.IDENTITY, {
++        GIT_AUTHOR_DATE = "2000-01-01T00:00:00Z",
++        GIT_COMMITTER_DATE = "2000-01-01T00:00:00Z",
++      })
++      local commit = tree and git(root, { "commit-tree", tree, "-m", "CodeCompanion submodule snapshot" }, identity)
++      if tree and tree == git(root, { "rev-parse", "HEAD^{tree}" }) then
++        commit = git(root, { "rev-parse", "HEAD" })
++      end
++      if not commit or not git(opts.root, { "update-index", "--cacheinfo", "160000", commit, path }, {
++        GIT_INDEX_FILE = opts.index,
++      }) then
++        return false
++      end
++    end
++  end
++  return true
++end
++
+ ---Add the worktree to an index, returning a tree
+ ---@param root string
+ ---@param index string
+@@ -138,6 +194,10 @@ local function write_tree(root, index)
+     return nil
+   end
+ 
++  local tree = git(root, { "write-tree" }, env)
++  if not tree or not snapshot_submodules({ root = root, index = index, tree = tree }) then
++    return nil
++  end
+   return git(root, { "write-tree" }, env)
+ end
+ 
+@@ -160,7 +220,7 @@ end
+ ---Write the worktree (including untracked files) to a git tree object
+ ---@param root string
+ ---@return string|nil tree
+-local function write_worktree(root)
++write_worktree = function(root)
+   local dir = git_dir(root)
+   if not dir then
+     return nil
+@@ -231,10 +291,10 @@ local function parse_hunks(output)
+     -- NOTE: A removed line can read `--- foo`, so only take these as headers
+     -- before the file's first hunk has opened a body for them to fall into
+     elseif not body and line:match("^%-%-%- ") then
+-      old_path = line:match('^%-%-%- "?a/(.-)"?$')
++      old_path = line:gsub("\t$", ""):match('^%-%-%- "?a/(.-)"?$')
+     elseif not body and line:match("^%+%+%+ ") then
+       -- Deleted files diff to /dev/null, so fall back to the old side's path
+-      path = line:match('^%+%+%+ "?b/(.-)"?$') or old_path
++      path = line:gsub("\t$", ""):match('^%+%+%+ "?b/(.-)"?$') or old_path
+     elseif new_start and path then
+       finish()
+       body = {}
+@@ -264,7 +324,15 @@ function M.get_root()
+     return nil
+   end
+ 
+-  return vim.fs.root(vim.uv.cwd() or 0, ".git")
++  local root = vim.fs.root(vim.uv.cwd() or 0, ".git")
++  while root do
++    local parent = git(root, { "rev-parse", "--show-superproject-working-tree" })
++    if not parent or parent == "" or parent == root then
++      break
++    end
++    root = parent
++  end
++  return root
+ end
+ 
+ ---The root that a review's state is stored against
+@@ -296,8 +364,25 @@ end
+ ---@param path string A path relative to the root
+ ---@return string[]
+ function M.show(root, path)
++  local ref = ref_for(root)
++  while true do
++    local child_root, child_ref, child_path
++    for prefix, commit in pairs(get_submodules({ root = root, ref = ref }) or {}) do
++      if path:sub(1, #prefix + 1) == prefix .. "/" then
++        child_root, child_ref, child_path = vim.fs.joinpath(root, prefix), commit, path:sub(#prefix + 2)
++        break
++      end
++    end
++    if not child_root then
++      break
++    end
++    if not is_initialized(child_root) then
++      return {}
++    end
++    root, ref, path = child_root, child_ref, child_path
++  end
+   local ok, result = pcall(function()
+-    return vim.system({ "git", "show", ref_for(root) .. ":" .. path }, { cwd = root, text = true }):wait()
++    return vim.system({ "git", "show", ref .. ":" .. path }, { cwd = root, text = true }):wait()
+   end)
+ 
+   if not ok or result.code ~= 0 then
+@@ -360,12 +445,40 @@ function M.set(root, commit)
+   return true
+ end
+ 
++---Keep child snapshots reachable for the lifetime of the parent branch's baseline
++---@param opts { root: string, tree: string, ref: string }
++---@return boolean
++local function retain_submodules(opts)
++  local submodules = get_submodules({ root = opts.root, ref = opts.tree })
++  if not submodules then
++    return false
++  end
++  for path, commit in pairs(submodules) do
++    local root = vim.fs.joinpath(opts.root, path)
++    if is_initialized(root) then
++      -- A parent gitlink does not protect objects from garbage collection in the child repository.
++      if not git(root, { "update-ref", opts.ref, commit })
++        or not retain_submodules({ root = root, tree = commit, ref = opts.ref }) then
++        return false
++      end
++    end
++  end
++  return true
++end
++
+ ---Snapshot the worktree to the baseline ref, returning the new commit sha
+ ---@param root string
+ ---@return string|nil
+ function M.snapshot(root)
+   local ref = ref_for(root)
+   local tree = write_worktree(root)
++  if tree and not retain_submodules({
++    root = root,
++    tree = tree,
++    ref = "refs/worktree/codecompanion/submodules/" .. hash.hash(root .. "\n" .. ref),
++  }) then
++    return nil
++  end
+   local commit = tree and git(root, { "commit-tree", tree, "-m", "CodeCompanion review baseline" }, CONSTANTS.IDENTITY)
+   local updated = commit and git(root, { "update-ref", ref, commit })
+ 
+@@ -390,33 +503,65 @@ function M.worktree_matches(root)
+   return write_worktree(root) == tree
+ end
+ 
+----Diff the current worktree against the baseline, one entry per hunk
+----@param root string
+----@return CodeCompanion.CodeReview.Hunk[]|nil hunks Nil when the worktree couldn't be read
+-function M.diff(root)
+-  local worktree = write_worktree(root)
+-  if not worktree then
++---@param opts { root: string, ref: string, tree: string, prefix: string }
++---@return CodeCompanion.CodeReview.Hunk[]|nil
++local function diff_tree(opts)
++  local old_submodules = get_submodules({ root = opts.root, ref = opts.ref })
++  local submodules = get_submodules({ root = opts.root, ref = opts.tree })
++  if not old_submodules or not submodules then
+     return nil
+   end
+-
+-  local ref = ref_for(root)
+-  sync_alias(root, ref)
+-
+   -- Split the same way as the review window's `vim.diff`, or its rows can't be matched to these hunks
+-  local output = git(root, {
++  local output = git(opts.root, {
+     "diff",
+     "--no-color",
+     "--no-ext-diff",
+     "--unified=0",
+     "--diff-algorithm=" .. diff.LINE_OPTS.algorithm,
+     diff.LINE_OPTS.indent_heuristic and "--indent-heuristic" or "--no-indent-heuristic",
+-    ref,
+-    worktree,
++    "--ignore-submodules=none",
++    "--submodule=short",
++    opts.ref,
++    opts.tree,
+   })
+-  if not output or output == "" then
+-    return {}
++  if not output then
++    return nil
+   end
+-  return parse_hunks(output)
++  local hunks = {}
++  for _, hunk in ipairs(parse_hunks(output)) do
++    if not old_submodules[hunk.path] and not submodules[hunk.path] then
++      hunk.path = opts.prefix .. hunk.path
++      if opts.prefix ~= "" then
++        hunk.id = hash.hash(opts.prefix .. tostring(hunk.id))
++      end
++      table.insert(hunks, hunk)
++    end
++  end
++  for path, commit in pairs(submodules) do
++    local root = vim.fs.joinpath(opts.root, path)
++    if is_initialized(root) and commit ~= old_submodules[path] then
++      local ref = old_submodules[path] or git(root, { "mktree" })
++      local children = ref and diff_tree({ root = root, ref = ref, tree = commit, prefix = opts.prefix .. path .. "/" })
++      if not children then
++        return nil
++      end
++      vim.list_extend(hunks, children)
++    end
++  end
++  return hunks
++end
++
++---Diff the current worktree against the baseline, one entry per hunk
++---@param root string
++---@return CodeCompanion.CodeReview.Hunk[]|nil hunks Nil when the worktree couldn't be read
++function M.diff(root)
++  local worktree = write_worktree(root)
++  if not worktree then
++    return nil
++  end
++  local ref = ref_for(root)
++  sync_alias(root, ref)
++  return diff_tree({ root = root, ref = ref, tree = worktree, prefix = "" })
+ end
+ 
+ return M

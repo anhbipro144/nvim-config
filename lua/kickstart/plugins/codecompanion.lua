@@ -4,7 +4,23 @@ return {
   keys = {
     { "`", "<cmd>CodeCompanionChat Toggle<CR>", desc = "Open CodeCompanion chat buffer" },
     { "<leader>cc", "<cmd>CodeCompanionChat<CR>", desc = "Start a new CodeCompanion chat" },
-    { "<leader>cv", "<cmd>CodeCompanionCodeReview<CR>", desc = "Open CodeCompanion code review" },
+    {
+      "<leader>cv",
+      function()
+        local baseline = require("codecompanion.interactions.code_review.baseline")
+        local root = baseline.get_root()
+        if root then
+          if not baseline.get(root) and not baseline.set(root, "HEAD") then
+            vim.notify("Could not initialize the review baseline", vim.log.levels.ERROR)
+            return
+          end
+          -- Keep subsequent chat submissions from replacing an unreviewed baseline.
+          require("codecompanion.interactions.code_review.store").begin_round(root)
+        end
+        vim.cmd("CodeCompanionCodeReview")
+      end,
+      desc = "Open CodeCompanion code review",
+    },
   },
   dependencies = {
     "nvim-lua/plenary.nvim",

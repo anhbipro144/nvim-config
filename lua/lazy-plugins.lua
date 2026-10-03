@@ -68,6 +68,8 @@ require('lazy').setup({
 
   require 'kickstart.plugins.flash',
 
+  require 'kickstart.plugins.lazy-local-patcher',
+
   require 'kickstart.plugins.codecompanion',
 
   require 'kickstart.plugins.prisma',
