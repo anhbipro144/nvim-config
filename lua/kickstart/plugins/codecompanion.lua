@@ -6,19 +6,7 @@ return {
     { "<leader>cc", "<cmd>CodeCompanionChat<CR>", desc = "Start a new CodeCompanion chat" },
     {
       "<leader>cv",
-      function()
-        local baseline = require("codecompanion.interactions.code_review.baseline")
-        local root = baseline.get_root()
-        if root then
-          if not baseline.get(root) and not baseline.set(root, "HEAD") then
-            vim.notify("Could not initialize the review baseline", vim.log.levels.ERROR)
-            return
-          end
-          -- Keep subsequent chat submissions from replacing an unreviewed baseline.
-          require("codecompanion.interactions.code_review.store").begin_round(root)
-        end
-        vim.cmd("CodeCompanionCodeReview")
-      end,
+      "<cmd>CodeCompanionCodeReview<CR>",
       desc = "Open CodeCompanion code review",
     },
   },
@@ -41,6 +29,7 @@ return {
       },
       interactions = {
         code_review = {
+          opts = { agent_only = true },
           keymaps = {
             close = {
               modes = { n = { "q", "<Esc>" } },

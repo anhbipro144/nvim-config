@@ -1,8 +1,113 @@
+diff --git a/lua/codecompanion/acp/init.lua b/lua/codecompanion/acp/init.lua
+index fa8a4a27..dd334f28 100644
+--- a/lua/codecompanion/acp/init.lua
++++ b/lua/codecompanion/acp/init.lua
+@@ -442,6 +442,7 @@ function Connection:_establish_session()
+     cwd = vim.fn.getcwd(),
+     mcpServers = self.adapter_modified.defaults.mcpServers,
+   }
++  self._session_cwd = session_args.cwd
+ 
+   if self.adapter_modified.defaults.mcpServers == "inherit_from_config" and config.mcp.opts.acp_enabled then
+     session_args.mcpServers = require("codecompanion.mcp").transform_to_acp()
+@@ -853,7 +854,13 @@ function Connection:handle_fs_write_file_request(id, params)
+   end
+ 
+   local fs = require("codecompanion.interactions.chat.acp.fs")
++  local operation = {
++    bufnr = self._active_prompt and self._active_prompt.options.bufnr,
++    id = "fs-write:" .. id, path = path, cwd = self._session_cwd,
++  }
++  utils.fire("ReviewToolStarted", operation)
+   local ok, err = fs.write_text_file(path, content)
++  utils.fire("ReviewToolFinished", operation)
+   if ok then
+     self:send_result(id, vim.NIL)
+     utils.fire("FileEdited", { path = path, tool = (self.adapter and self.adapter.name) or "acp" })
+diff --git a/lua/codecompanion/config.lua b/lua/codecompanion/config.lua
+index 676f5f5f..a56e67e3 100644
+--- a/lua/codecompanion/config.lua
++++ b/lua/codecompanion/config.lua
+@@ -1009,6 +1009,7 @@ The user is working on a %s machine. Please respond with system specific command
+       },
+       opts = {
+         auto_accept = {}, -- Globs for files that never need reviewing, e.g. { "**/*.lock" }
++        agent_only = false, -- Capture saved changes during tool operations instead of whole chat turns
+         storage_dir = vim.fs.joinpath(vim.fn.stdpath("data"), "codecompanion", "code_review"),
+       },
+     },
+diff --git a/lua/codecompanion/interactions/chat/acp/handler.lua b/lua/codecompanion/interactions/chat/acp/handler.lua
+index 5b8dd17c..d3c05ae6 100644
+--- a/lua/codecompanion/interactions/chat/acp/handler.lua
++++ b/lua/codecompanion/interactions/chat/acp/handler.lua
+@@ -26,6 +26,7 @@ function ACPHandler.new(chat)
+     output = {},
+     reasoning = {},
+     tools = {},
++    review_calls = {},
+     edits = {},
+     ui_state = {},
+     _permission = {
+@@ -213,6 +214,11 @@ end
+ ---@param payload table
+ ---@return table Request object
+ function ACPHandler:create_and_send_prompt(payload)
++  self.review_calls = {}
++  utils.fire("ReviewSessionStarted", {
++    bufnr = self.chat.bufnr,
++    cwd = self.chat.acp_connection._session_cwd,
++  })
+   -- Transform ACP commands before sending
+   local transformed_payload = vim.deepcopy(payload)
+   transformed_payload.messages = self:transform_acp_commands(payload.messages)
+@@ -323,6 +329,18 @@ function ACPHandler:process_tool_call(tool_call)
+   local merged = merge_tool_call(self.tools[id], tool_call)
+   tool_call = merged
+ 
++  local terminal = tool_call.status == "completed" or tool_call.status == "failed"
++  if not self.review_calls[id] then
++    self.review_calls[id] = "started"
++    utils.fire("ReviewToolStarted", {
++      bufnr = self.chat.bufnr, id = id, late = terminal, cwd = self.chat.acp_connection and self.chat.acp_connection._session_cwd,
++    })
++  end
++  if terminal and self.review_calls[id] ~= "finished" then
++    self.review_calls[id] = "finished"
++    utils.fire("ReviewToolFinished", { bufnr = self.chat.bufnr, id = id })
++  end
++
+   self:track_edits(id, tool_call)
+ 
+   -- Cache or cleanup
 diff --git a/lua/codecompanion/interactions/code_review/baseline.lua b/lua/codecompanion/interactions/code_review/baseline.lua
-index 3577c711..9b56ce24 100644
+index 3577c711..f6a68c8c 100644
 --- a/lua/codecompanion/interactions/code_review/baseline.lua
 +++ b/lua/codecompanion/interactions/code_review/baseline.lua
-@@ -126,6 +126,62 @@ local function aborted(result)
+@@ -38,12 +38,13 @@ local M = {}
+ ---@param args string[]
+ ---@param env? table<string, string>
+ ---@return vim.SystemCompleted|nil
+-local function run(root, args, env)
++local function run(root, args, env, stdin)
+   local ok, result = pcall(function()
+-    return vim.system(vim.list_extend({ "git" }, args), { cwd = root, env = env, text = true }):wait()
++    return vim.system(vim.list_extend({ "git" }, args), { cwd = root, env = env, stdin = stdin, text = true }):wait()
+   end)
+ 
+   if not ok then
++    log:error("[Code Review] Git could not run: %s", result)
+     return nil
+   end
+ 
+@@ -58,6 +59,7 @@ end
+ local function git(root, args, env)
+   local result = run(root, args, env)
+   if not result or result.code ~= 0 then
++    log:debug("[Code Review] git %s failed: %s", table.concat(args, " "), result and result.stderr or "unavailable")
+     return nil
+   end
+ 
+@@ -126,6 +128,62 @@ local function aborted(result)
    return result == nil or (result.stderr or ""):find("fatal:", 1, true) ~= nil
  end
  
@@ -65,7 +170,7 @@ index 3577c711..9b56ce24 100644
  ---Add the worktree to an index, returning a tree
  ---@param root string
  ---@param index string
-@@ -138,6 +194,10 @@ local function write_tree(root, index)
+@@ -138,6 +196,10 @@ local function write_tree(root, index)
      return nil
    end
  
@@ -76,7 +181,7 @@ index 3577c711..9b56ce24 100644
    return git(root, { "write-tree" }, env)
  end
  
-@@ -160,7 +220,7 @@ end
+@@ -160,7 +222,7 @@ end
  ---Write the worktree (including untracked files) to a git tree object
  ---@param root string
  ---@return string|nil tree
@@ -85,7 +190,7 @@ index 3577c711..9b56ce24 100644
    local dir = git_dir(root)
    if not dir then
      return nil
-@@ -231,10 +291,10 @@ local function parse_hunks(output)
+@@ -231,10 +293,10 @@ local function parse_hunks(output)
      -- NOTE: A removed line can read `--- foo`, so only take these as headers
      -- before the file's first hunk has opened a body for them to fall into
      elseif not body and line:match("^%-%-%- ") then
@@ -98,12 +203,18 @@ index 3577c711..9b56ce24 100644
      elseif new_start and path then
        finish()
        body = {}
-@@ -264,7 +324,15 @@ function M.get_root()
+@@ -259,12 +321,20 @@ end
+ 
+ ---Get the git root for the current working directory
+ ---@return string|nil
+-function M.get_root()
++function M.get_root(cwd)
+   if vim.fn.executable("git") == 0 then
      return nil
    end
  
 -  return vim.fs.root(vim.uv.cwd() or 0, ".git")
-+  local root = vim.fs.root(vim.uv.cwd() or 0, ".git")
++  local root = vim.fs.root(cwd or vim.uv.cwd() or 0, ".git")
 +  while root do
 +    local parent = git(root, { "rev-parse", "--show-superproject-working-tree" })
 +    if not parent or parent == "" or parent == root then
@@ -115,11 +226,13 @@ index 3577c711..9b56ce24 100644
  end
  
  ---The root that a review's state is stored against
-@@ -296,8 +364,25 @@ end
+@@ -295,9 +365,26 @@ end
+ ---@param root string
  ---@param path string A path relative to the root
  ---@return string[]
- function M.show(root, path)
-+  local ref = ref_for(root)
+-function M.show(root, path)
++function M.show(root, path, ref)
++  ref = ref or ref_for(root)
 +  while true do
 +    local child_root, child_ref, child_path
 +    for prefix, commit in pairs(get_submodules({ root = root, ref = ref }) or {}) do
@@ -142,7 +255,7 @@ index 3577c711..9b56ce24 100644
    end)
  
    if not ok or result.code ~= 0 then
-@@ -360,12 +445,40 @@ function M.set(root, commit)
+@@ -360,12 +447,40 @@ function M.set(root, commit)
    return true
  end
  
@@ -183,7 +296,340 @@ index 3577c711..9b56ce24 100644
    local commit = tree and git(root, { "commit-tree", tree, "-m", "CodeCompanion review baseline" }, CONSTANTS.IDENTITY)
    local updated = commit and git(root, { "update-ref", ref, commit })
  
-@@ -390,33 +503,65 @@ function M.worktree_matches(root)
+@@ -378,6 +493,332 @@ function M.snapshot(root)
+   return commit
+ end
+ 
++local operations = {}
++local branch_reviews = {}
++
++---@param root string
++---@return boolean
++function M.agent_only(root)
++  return require("codecompanion.config").interactions.code_review.opts.agent_only and not branch_reviews[root]
++end
++
++---@param opts { root: string, enabled: boolean }
++function M.branch_review(opts)
++  branch_reviews[opts.root] = opts.enabled or nil
++end
++
++---@param root string
++---@param name string
++---@return string
++local function journal_ref(root, name)
++  return "refs/worktree/codecompanion/agent-" .. name .. "/" .. hash.hash(ref_for(root))
++end
++
++---@param opts { root: string, tree: string, ref: string }
++---@return string|nil
++local function publish(opts)
++  local commit = git(opts.root, { "commit-tree", opts.tree, "-m", "CodeCompanion agent snapshot" }, CONSTANTS.IDENTITY)
++  local retained = commit and retain_submodules({
++    root = opts.root,
++    tree = opts.tree,
++    ref = "refs/worktree/codecompanion/submodules/" .. hash.hash(opts.root .. "\n" .. opts.ref),
++  })
++  if not retained or not git(opts.root, { "update-ref", opts.ref, commit }) then
++    return nil
++  end
++  return commit
++end
++
++---@param opts { root: string, index: string, ref: string, path: string }
++---@return boolean
++local function copy_entry(opts)
++  local output = git(opts.root, { "ls-tree", "-z", opts.ref, "--", opts.path })
++  if output == nil then
++    return false
++  end
++  local env = { GIT_INDEX_FILE = opts.index }
++  if output == "" then
++    return git(opts.root, { "update-index", "--force-remove", "--", opts.path }, env) ~= nil
++  end
++  local mode, object = output:match("^(%d+) %w+ (%x+)\t")
++  return mode ~= nil and git(opts.root, { "update-index", "--add", "--cacheinfo", mode, object, opts.path }, env) ~= nil
++end
++
++---@param opts { root: string, index: string, base: string, result: string, before: string, path: string }
++---@return boolean
++local function reconcile_file(opts)
++  local unchanged = run(opts.root, { "diff", "--quiet", opts.base, opts.result, "--", opts.path })
++  if unchanged and unchanged.code == 0 then
++    return copy_entry({ root = opts.root, index = opts.index, ref = opts.before, path = opts.path })
++  end
++  local patch = run(opts.root, {
++    "diff", "--binary", "--full-index", "--no-ext-diff", "--no-renames", opts.result, opts.before, "--", opts.path,
++  })
++  if not patch or patch.code ~= 0 then
++    return false
++  end
++  local applied = run(opts.root, { "apply", "--cached", "--3way", "--ours", "--whitespace=nowarn" }, {
++    GIT_INDEX_FILE = opts.index,
++  }, patch.stdout)
++  if applied and applied.code == 0 then
++    return true
++  end
++  -- Add/delete and binary conflicts overlap the whole file, so retain the agent-free baseline.
++  return copy_entry({ root = opts.root, index = opts.index, ref = opts.base, path = opts.path })
++end
++
++local reconcile_tree
++
++---@param opts { root: string, index: string, base: string, result: string, before: string, path: string }
++---@return boolean
++local function reconcile_submodule(opts)
++  local root = vim.fs.joinpath(opts.root, opts.path)
++  if not is_initialized(root) then
++    return copy_entry({ root = opts.root, index = opts.index, ref = opts.before, path = opts.path })
++  end
++  local base = get_submodules({ root = opts.root, ref = opts.base })[opts.path]
++  local result = get_submodules({ root = opts.root, ref = opts.result })[opts.path]
++  local before = get_submodules({ root = opts.root, ref = opts.before })[opts.path]
++  if not base or not result or not before then
++    return reconcile_file(opts)
++  end
++  local tree = reconcile_tree({ root = root, base = base, result = result, before = before })
++  local commit = tree and git(root, { "commit-tree", tree, "-m", "CodeCompanion agent baseline" }, CONSTANTS.IDENTITY)
++  return commit ~= nil and git(opts.root, { "update-index", "--cacheinfo", "160000", commit, opts.path }, {
++    GIT_INDEX_FILE = opts.index,
++  }) ~= nil
++end
++
++---@param opts { root: string, base: string, result: string, before: string }
++---@return string|nil
++reconcile_tree = function(opts)
++  local dir = git_dir(opts.root)
++  if not dir then
++    return nil
++  end
++  local index = vim.fs.joinpath(dir, "codecompanion-agent-index")
++  local env = { GIT_INDEX_FILE = index }
++  if not git(opts.root, { "read-tree", opts.base }, env) then
++    return nil
++  end
++  local changed = run(opts.root, { "diff", "--name-only", "-z", "--no-renames", opts.result, opts.before })
++  local submodules = vim.tbl_extend("force",
++    get_submodules({ root = opts.root, ref = opts.result }) or {},
++    get_submodules({ root = opts.root, ref = opts.before }) or {})
++  if not changed or changed.code ~= 0 then
++    return nil
++  end
++  for path in (changed.stdout or ""):gmatch("[^%z]+") do
++    local reconcile = submodules[path] and reconcile_submodule or reconcile_file
++    if not reconcile(vim.tbl_extend("force", opts, { index = index, path = path })) then
++      return nil
++    end
++  end
++  return git(opts.root, { "write-tree" }, env)
++end
++
++---@param root string
++---@return string|nil
++function M.prepare(root)
++  local tree = write_worktree(root)
++  return tree and publish({ root = root, tree = tree, ref = journal_ref(root, "checkpoint") })
++end
++
++---@param root string
++---@return string|nil
++function M.checkpoint(root)
++  return git(root, { "rev-parse", "--quiet", "--verify", journal_ref(root, "checkpoint") })
++end
++
++---@param opts { root: string, ref: string }
++---@return boolean|nil
++function M.checkpoint_matches(opts)
++  local tree = git(opts.root, { "rev-parse", "--verify", opts.ref .. "^{tree}" })
++  local worktree = write_worktree(opts.root)
++  if not tree or not worktree then
++    return nil
++  end
++  return tree == worktree
++end
++
++---@param opts { root: string, id: string, late?: boolean, before?: string }
++---@return boolean, boolean|nil
++function M.start_operation(opts)
++  local key = opts.root .. "\n" .. ref_for(opts.root)
++  local state = operations[key]
++  if state then
++    state.active[opts.id] = true
++    return true
++  end
++  local before
++  if opts.before then
++    before = git(opts.root, { "rev-parse", "--verify", opts.before .. "^{tree}" })
++  elseif opts.late then
++    before = git(opts.root, { "rev-parse", "--verify", journal_ref(opts.root, "checkpoint") .. "^{tree}" })
++  else
++    before = write_worktree(opts.root)
++  end
++  if not before then
++    return false
++  end
++  local result = git(opts.root, { "rev-parse", "--quiet", "--verify", journal_ref(opts.root, "result") })
++  local base = M.get(opts.root)
++  local tree = result and base and reconcile_tree({ root = opts.root, base = base, result = result, before = before })
++    or (not result and before)
++  if not tree or not publish({ root = opts.root, tree = tree, ref = ref_for(opts.root) }) then
++    return false
++  end
++  sync_alias(opts.root, ref_for(opts.root))
++  operations[key] = { active = { [opts.id] = true } }
++  return true, result == nil
++end
++
++---@param opts { root: string, id: string }
++---@return boolean
++function M.finish_operation(opts)
++  local key = opts.root .. "\n" .. ref_for(opts.root)
++  local state = operations[key]
++  if not state or not state.active[opts.id] then
++    return false
++  end
++  state.active[opts.id] = nil
++  if next(state.active) then
++    return true
++  end
++  local tree = write_worktree(opts.root)
++  if not tree or not publish({ root = opts.root, tree = tree, ref = journal_ref(opts.root, "result") }) then
++    state.active[opts.id] = true
++    return false
++  end
++  operations[key] = nil
++  if not publish({ root = opts.root, tree = tree, ref = journal_ref(opts.root, "checkpoint") }) then
++    log:error("[Code Review] Captured the result but could not refresh the next operation checkpoint")
++  end
++  return true
++end
++
++---@param root string
++---@return boolean
++function M.reset_operations(root)
++  if operations[root .. "\n" .. ref_for(root)] then
++    return false
++  end
++  if not M.snapshot(root) then
++    return false
++  end
++  return git(root, { "update-ref", "-d", journal_ref(root, "result") }) ~= nil
++end
++
++---@param root string
++---@param path string
++---@return string[]|nil
++function M.captured_lines(root, path)
++  if M.agent_only(root) then
++    return M.show(root, path, journal_ref(root, "result"))
++  end
++end
++
++local replace_captured_path
++
++---@param opts { root: string, result: string, tree: string, path: string }
++---@return string|nil
++replace_captured_path = function(opts)
++  local submodules = get_submodules({ root = opts.root, ref = opts.tree }) or {}
++  local old_submodules = get_submodules({ root = opts.root, ref = opts.result }) or {}
++  local index = vim.fs.joinpath(git_dir(opts.root), "codecompanion-agent-index")
++  local env = { GIT_INDEX_FILE = index }
++  if not git(opts.root, { "read-tree", opts.result }, env) then
++    return nil
++  end
++  for path, commit in pairs(submodules) do
++    if opts.path:sub(1, #path + 1) == path .. "/" then
++      local root = vim.fs.joinpath(opts.root, path)
++      local tree = replace_captured_path({
++        root = root, result = old_submodules[path] or git(root, { "mktree" }),
++        tree = commit, path = opts.path:sub(#path + 2),
++      })
++      local updated = tree and git(root, { "commit-tree", tree, "-m", "CodeCompanion review edit" }, CONSTANTS.IDENTITY)
++      if not updated or not git(opts.root, { "update-index", "--cacheinfo", "160000", updated, path }, env) then
++        return nil
++      end
++      return git(opts.root, { "write-tree" }, env)
++    end
++  end
++  if not copy_entry({ root = opts.root, index = index, ref = opts.tree, path = opts.path }) then
++    return nil
++  end
++  return git(opts.root, { "write-tree" }, env)
++end
++
++---@param opts { root: string, path: string }
++---@return boolean
++function M.record_review_write(opts)
++  if not M.agent_only(opts.root) then
++    return true
++  end
++  local ref = journal_ref(opts.root, "result")
++  local tree = write_worktree(opts.root)
++  tree = tree and replace_captured_path({ root = opts.root, result = ref, tree = tree, path = opts.path })
++  return tree ~= nil and publish({ root = opts.root, tree = tree, ref = ref }) ~= nil
++end
++
++---@param opts { root: string, ref: string, index: string, path: string, content: string }
++---@return boolean
++local function index_saved_file(opts)
++  local ignored = run(opts.root, { "check-ignore", "--quiet", "--", opts.path })
++  if ignored and ignored.code == 0 then
++    return true
++  end
++  local entry = git(opts.root, { "ls-tree", "-z", opts.ref, "--", opts.path })
++  local mode = entry and entry:match("^(%d+)") or "100644"
++  if mode == "120000" then
++    return true
++  end
++  local object = run(opts.root, { "hash-object", "-w", "--path=" .. opts.path, "--stdin" }, nil, opts.content)
++  return object ~= nil and object.code == 0 and git(opts.root, {
++    "update-index", "--add", "--cacheinfo", mode, vim.trim(object.stdout), opts.path,
++  }, { GIT_INDEX_FILE = opts.index }) ~= nil
++end
++
++local saved_file_tree
++
++---@param opts { root: string, ref: string, path: string, content: string }
++---@return string|nil
++saved_file_tree = function(opts)
++  local dir = git_dir(opts.root)
++  if not dir then
++    return nil
++  end
++  local index = vim.fs.joinpath(dir, "codecompanion-user-index")
++  local env = { GIT_INDEX_FILE = index }
++  if not git(opts.root, { "read-tree", opts.ref }, env) then
++    return nil
++  end
++  for path, commit in pairs(get_submodules({ root = opts.root, ref = opts.ref }) or {}) do
++    if opts.path:sub(1, #path + 1) == path .. "/" then
++      local root = vim.fs.joinpath(opts.root, path)
++      local tree = saved_file_tree({ root = root, ref = commit, path = opts.path:sub(#path + 2), content = opts.content })
++      local updated = tree and git(root, { "commit-tree", tree, "-m", "CodeCompanion editor checkpoint" }, CONSTANTS.IDENTITY)
++      if not updated or not git(opts.root, { "update-index", "--cacheinfo", "160000", updated, path }, env) then
++        return nil
++      end
++      return git(opts.root, { "write-tree" }, env)
++    end
++  end
++  if not index_saved_file(vim.tbl_extend("force", opts, { index = index })) then
++    return nil
++  end
++  return git(opts.root, { "write-tree" }, env)
++end
++
++---@param opts { root: string, path: string, content: string }
++---@return boolean
++function M.record_user_write(opts)
++  local ref = journal_ref(opts.root, "checkpoint")
++  local tree = saved_file_tree(vim.tbl_extend("force", opts, { ref = ref }))
++  return tree ~= nil and publish({ root = opts.root, tree = tree, ref = ref }) ~= nil
++end
++
+ ---Is the worktree identical to the baseline?
+ ---@param root string
+ ---@return boolean
+@@ -390,33 +831,76 @@ function M.worktree_matches(root)
    return write_worktree(root) == tree
  end
  
@@ -225,8 +671,7 @@ index 3577c711..9b56ce24 100644
 -    return {}
 +  if not output then
 +    return nil
-   end
--  return parse_hunks(output)
++  end
 +  local hunks = {}
 +  for _, hunk in ipairs(parse_hunks(output)) do
 +    if not old_submodules[hunk.path] and not submodules[hunk.path] then
@@ -255,10 +700,22 @@ index 3577c711..9b56ce24 100644
 +---@param root string
 +---@return CodeCompanion.CodeReview.Hunk[]|nil hunks Nil when the worktree couldn't be read
 +function M.diff(root)
-+  local worktree = write_worktree(root)
++  local worktree
++  if M.agent_only(root) then
++    if operations[root .. "\n" .. ref_for(root)] then
++      return nil
++    end
++    worktree = git(root, { "rev-parse", "--quiet", "--verify", journal_ref(root, "result") })
++    if not worktree then
++      return {}
++    end
++  else
++    worktree = write_worktree(root)
++  end
 +  if not worktree then
 +    return nil
-+  end
+   end
+-  return parse_hunks(output)
 +  local ref = ref_for(root)
 +  sync_alias(root, ref)
 +  return diff_tree({ root = root, ref = ref, tree = worktree, prefix = "" })
@@ -266,7 +723,7 @@ index 3577c711..9b56ce24 100644
  
  return M
 diff --git a/lua/codecompanion/interactions/code_review/checklist.lua b/lua/codecompanion/interactions/code_review/checklist.lua
-index fa16b0d0..8fa09ddd 100644
+index fa16b0d0..9249129e 100644
 --- a/lua/codecompanion/interactions/code_review/checklist.lua
 +++ b/lua/codecompanion/interactions/code_review/checklist.lua
 @@ -16,7 +16,8 @@ local M = {}
@@ -279,6 +736,15 @@ index fa16b0d0..8fa09ddd 100644
  ---@field path? string Absent on the header row
  ---@field sent? string[] Comments sent last round against these lines, so the response can be read against the ask
  ---@field spans? table<string, number[]> Byte ranges to highlight, keyed by what they show: `path`, `added`, `removed`, `errors`, `warnings`
+@@ -160,7 +161,7 @@ end
+ ---@return CC.Diff
+ local function build_diff(opts)
+   local from = baseline.show(opts.root, opts.path)
+-  local to = M.read_file_lines(opts.root, opts.path)
++  local to = baseline.captured_lines(opts.root, opts.path) or M.read_file_lines(opts.root, opts.path)
+   local file_diff = create_diff({ root = opts.root, path = opts.path, from = from, to = to })
+ 
+   local settled = {}
 @@ -468,6 +469,65 @@ local function sort_by_risk(opts)
    return opts.paths
  end
@@ -353,8 +819,232 @@ index fa16b0d0..8fa09ddd 100644
    local header = summarise_round({
      paths = paths,
      diffs = diffs,
+diff --git a/lua/codecompanion/interactions/code_review/init.lua b/lua/codecompanion/interactions/code_review/init.lua
+index ba38b458..c95fc563 100644
+--- a/lua/codecompanion/interactions/code_review/init.lua
++++ b/lua/codecompanion/interactions/code_review/init.lua
+@@ -105,7 +105,8 @@ end
+ function M.mark_reviewed()
+   local root = get_storage_root()
+ 
+-  if baseline.get_root() and not baseline.snapshot(root) then
++  local saved = config.interactions.code_review.opts.agent_only and baseline.reset_operations or baseline.snapshot
++  if baseline.get_root() and not saved(root) then
+     notify("Could not save your review. These changes will show up again next time", vim.log.levels.ERROR)
+     return false
+   end
+@@ -113,6 +114,7 @@ function M.mark_reviewed()
+   store.clear_round(root)
+   store.clear_accepted(root)
+   store.clear_sent(root)
++  baseline.branch_review({ root = root, enabled = false })
+   return true
+ end
+ 
+@@ -208,6 +210,8 @@ function M.review_branch()
+     return notify("Could not move the review to the start of the branch", vim.log.levels.ERROR)
+   end
+ 
++  baseline.branch_review({ root = root, enabled = true })
++
+   store.clear_accepted(root)
+   -- Hold the fork point as the baseline until the review is done, or the next submission would snapshot over it
+   store.begin_round(root)
+@@ -228,6 +232,179 @@ function M.edit_comments()
+   ui.watch_for_comments(api.nvim_get_current_buf())
+ end
+ 
++local capture_sessions = {}
++local capture_tools = {}
++
++---@param event table
++---@return string
++local function operation_id(event)
++  local data = event.data or {}
++  local source = event.match:find("ReviewTool", 1, true) and "acp" or "native"
++  return source .. ":" .. tostring(data.bufnr) .. ":" .. tostring(data.id) .. ":" .. (data.tool or data.name or "")
++end
++
++---@param event table
++local function start_capture(event)
++  local data = event.data or {}
++  local session = capture_sessions[data.bufnr]
++  local root = data.cwd and baseline.get_root(data.cwd) or session and session.root
++    or baseline.get_root(data.path and vim.fs.dirname(data.path))
++  if not root or not baseline.agent_only(root) then
++    return
++  end
++  local id = operation_id(event)
++  if capture_tools[id] then
++    return
++  end
++  if data.late then
++    notify("Agent sent no tool start notification; capturing from the preceding checkpoint (may include manual edits)", vim.log.levels.WARN)
++  end
++  local acp = event.match == "CodeCompanionReviewToolStarted"
++  local before = acp and baseline.checkpoint(root) or nil
++  if acp and not before then
++    return notify("Could not find the checkpoint preceding this ACP operation", vim.log.levels.ERROR)
++  end
++  local started, fresh = baseline.start_operation({ root = root, id = id, late = data.late, before = before })
++  if not started then
++    return notify("Could not capture the start of an agent operation", vim.log.levels.ERROR)
++  end
++  if fresh then
++    store.clear_accepted(root)
++  end
++  if session then
++    session.has_tools = true
++  end
++  capture_tools[id] = { root = root, bufnr = data.bufnr, branch = baseline.get_branch(root) }
++end
++
++---@param id string
++local function finish_capture(id)
++  local tool = capture_tools[id]
++  if not tool then
++    return
++  end
++  if tool.branch ~= baseline.get_branch(tool.root) or not baseline.finish_operation({ root = tool.root, id = id }) then
++    return notify("Could not capture an agent operation; finish it on the original branch before reviewing", vim.log.levels.ERROR)
++  end
++  capture_tools[id] = nil
++  store.begin_round(tool.root)
++  ui.refresh()
++end
++
++---@param bufnr number
++local function capture_unreported_turn(bufnr)
++  local session = capture_sessions[bufnr]
++  if not session or not session.acp or session.has_tools or session.closed or not session.checkpoint then
++    return
++  end
++  if not baseline.agent_only(session.root) then
++    return
++  end
++  if session.branch ~= baseline.get_branch(session.root) then
++    return notify("Cannot capture this turn after changing branches", vim.log.levels.ERROR)
++  end
++  local unchanged = baseline.checkpoint_matches({ root = session.root, ref = session.checkpoint })
++  if unchanged == nil then
++    return notify("Could not check the completed agent turn for edits", vim.log.levels.ERROR)
++  end
++  if unchanged then
++    session.closed = true
++    return
++  end
++  notify("ACP supplied no tool events; capturing this turn's edits (may include concurrent manual edits)", vim.log.levels.WARN)
++  local id = "turn:" .. bufnr .. ":" .. session.checkpoint
++  local started, fresh = baseline.start_operation({ root = session.root, id = id, before = session.checkpoint })
++  if not started then
++    return notify("Could not capture the unreported agent turn", vim.log.levels.ERROR)
++  end
++  if fresh then
++    store.clear_accepted(session.root)
++  end
++  capture_tools[id] = { root = session.root, bufnr = bufnr, branch = session.branch }
++  finish_capture(id)
++  session.closed = capture_tools[id] == nil
++end
++
++---@param event table
++local function record_editor_save(event)
++  local path = api.nvim_buf_get_name(event.buf)
++  local root = path ~= "" and baseline.get_root(vim.fs.dirname(path))
++  if not root or not baseline.agent_only(root) or not baseline.checkpoint(root) then
++    return
++  end
++  for _, tool in pairs(capture_tools) do
++    if tool.root == root then
++      return
++    end
++  end
++  local relative = vim.fs.relpath(root, path)
++  if not relative or relative:sub(1, 3) == "../" then
++    return
++  end
++  local separator = vim.bo[event.buf].fileformat == "dos" and "\r\n" or "\n"
++  local content = table.concat(api.nvim_buf_get_lines(event.buf, 0, -1, false), separator)
++    .. (vim.bo[event.buf].endofline and separator or "")
++  if not baseline.record_user_write({ root = root, path = relative, content = content }) then
++    notify("Could not record an editor save separately from agent edits", vim.log.levels.ERROR)
++  end
++end
++
++---@param group number
++local function setup_capture(group)
++  api.nvim_create_autocmd("BufWritePost", { group = group, callback = record_editor_save })
++  api.nvim_create_autocmd("User", {
++    group = group,
++    pattern = { "CodeCompanionChatSubmitted", "CodeCompanionReviewSessionStarted" },
++    callback = function(event)
++      local data = event.data or {}
++      local chat = data.bufnr and require("codecompanion").buf_get_chat(data.bufnr)
++      local cwd = data.cwd or chat and chat.acp_connection and chat.acp_connection._session_cwd
++        or chat and chat:make_system_prompt_context().cwd
++      local root = baseline.get_root(cwd)
++      if root and data.bufnr then
++        local checkpoint = baseline.prepare(root)
++        capture_sessions[data.bufnr] = {
++          root = root,
++          checkpoint = checkpoint,
++          branch = baseline.get_branch(root),
++          acp = data.type == "acp" or event.match == "CodeCompanionReviewSessionStarted"
++            or chat and chat.adapter.type == "acp",
++        }
++        if not checkpoint then
++          notify("Could not save an agent review checkpoint", vim.log.levels.ERROR)
++        end
++      end
++    end,
++  })
++  api.nvim_create_autocmd("User", {
++    group = group,
++    pattern = { "CodeCompanionToolStarted", "CodeCompanionReviewToolStarted" },
++    callback = start_capture,
++  })
++  api.nvim_create_autocmd("User", {
++    group = group,
++    pattern = { "CodeCompanionToolFinished", "CodeCompanionReviewToolFinished" },
++    callback = function(event)
++      finish_capture(operation_id(event))
++    end,
++  })
++  api.nvim_create_autocmd("User", {
++    group = group,
++    pattern = { "CodeCompanionChatDone", "CodeCompanionRequestFinished" },
++    callback = function(event)
++      if event.match == "CodeCompanionRequestFinished" and event.data.status ~= "cancelled" and event.data.status ~= "error" then
++        return
++      end
++      for id, tool in pairs(capture_tools) do
++        if tool.bufnr == event.data.bufnr then
++          finish_capture(id)
++        end
++      end
++      capture_unreported_turn(event.data.bufnr)
++    end,
++  })
++end
++
+ ---@return nil
+ function M.setup()
+   if not config.interactions.code_review.enabled then
+@@ -236,6 +413,12 @@ function M.setup()
+ 
+   local group = api.nvim_create_augroup("codecompanion.code_review", { clear = true })
+ 
++  if config.interactions.code_review.opts.agent_only then
++    setup_capture(group)
++    ui.refresh()
++    return
++  end
++
+   api.nvim_create_autocmd("User", {
+     desc = "Snapshot the review baseline at the start of an agent's edits",
+     group = group,
 diff --git a/lua/codecompanion/interactions/code_review/window.lua b/lua/codecompanion/interactions/code_review/window.lua
-index f7001b82..721e4cde 100644
+index f7001b82..1e05644e 100644
 --- a/lua/codecompanion/interactions/code_review/window.lua
 +++ b/lua/codecompanion/interactions/code_review/window.lua
 @@ -57,6 +57,16 @@ local review ---@type CodeCompanion.CodeReview.Window
@@ -455,7 +1145,37 @@ index f7001b82..721e4cde 100644
  
    if #built.entries == 0 then
      review.active_path = nil
-@@ -705,6 +754,22 @@ local ACTIONS = {
+@@ -455,6 +504,9 @@ local function revert_hunks(entry)
+ 
+   -- The row's line numbers come from the diff, so they only hold while the file is unchanged since it was drawn
+   if not vim.deep_equal(api.nvim_buf_get_lines(bufnr, 0, -1, false), file_diff.to.lines) then
++    if baseline.agent_only(review.root) then
++      return notify(fmt("`%s` changed after agent capture; revert would overwrite later edits", entry.path), vim.log.levels.WARN)
++    end
+     notify(fmt("`%s` changed since the review was drawn, so the review has been refreshed", entry.path))
+     return rebuild()
+   end
+@@ -478,6 +530,9 @@ local function revert_hunks(entry)
+   end)
+ 
+   table.insert(review.undo, { splices = splices, reverted = api.nvim_buf_get_lines(bufnr, 0, -1, false) })
++  if not baseline.record_review_write({ root = review.root, path = entry.path }) then
++    notify("Could not save the reverted file in the review", vim.log.levels.ERROR)
++  end
+   rebuild()
+ end
+ 
+@@ -505,6 +560,9 @@ local function undo_revert(undo)
+   api.nvim_buf_call(bufnr, function()
+     vim.cmd("silent noautocmd write")
+   end)
++  if not baseline.record_review_write({ root = review.root, path = path }) then
++    notify("Could not save the restored file in the review", vim.log.levels.ERROR)
++  end
+   return true
+ end
+ 
+@@ -705,6 +763,22 @@ local ACTIONS = {
    undo = undo_last,
  }
  
@@ -478,7 +1198,7 @@ index f7001b82..721e4cde 100644
  ---@return nil
  local function set_keymaps()
    for _, map in pairs(config.interactions.code_review.keymaps or {}) do
-@@ -723,6 +788,15 @@ local function set_keymaps()
+@@ -723,6 +797,15 @@ local function set_keymaps()
        end
      end
    end
@@ -494,7 +1214,7 @@ index f7001b82..721e4cde 100644
  end
  
  ---@return nil
-@@ -845,10 +919,12 @@ function M.open()
+@@ -845,10 +928,12 @@ function M.open()
    highlight_checklist()
    set_keymaps()
    setup_sync()
